@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
-import Product from "@/models/product";
+import Product from "@/lib/models/product";
 
 export async function GET() {
     await connectToDB();
@@ -10,15 +10,33 @@ export async function GET() {
 
 export async function POST(request: Request) {
     await connectToDB();
-    const { name, sku, price } = await request.json();
-    if (!name || !sku || typeof price !== "number") {
+    const body: unknown = await request.json();
+    if (typeof body !== "object" || body === null) {
+        return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+    const { name, salePrice, costPrice, category, brand, description } = body as Record<string, unknown>;
+    let { variants } = body as { variants?: Array<{ sku: string; size?: string; color?: string; stockQuantity?: number; reorderLevel?: number }> };
+
+    // Backward compatibility for the older flat payload: { name, sku, price }
+    const maybeRecord = body as Record<string, unknown>;
+    if (!variants && (typeof maybeRecord.sku === "string" || typeof maybeRecord.price === "number")) {
+        const sku = maybeRecord.sku as string | undefined;
+        const price = typeof maybeRecord.price === "number" ? maybeRecord.price : undefined;
+        if (!sku || price === undefined) {
+            return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+        }
+        variants = [{ sku, stockQuantity: 0 }];
+    }
+
+    if (!name || !Array.isArray(variants)) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
     try {
-        const created = await Product.create({ name, sku, price, stock: 0 });
+        const created = await Product.create({ name, salePrice, costPrice, category, brand, description, variants });
         return NextResponse.json(created, { status: 201 });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 400 });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        return NextResponse.json({ error: message }, { status: 400 });
     }
 }
 

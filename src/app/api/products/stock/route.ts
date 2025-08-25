@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
-import Product from "@/models/product";
+import Product from "@/lib/models/product";
 
 export async function POST(request: Request) {
     await connectToDB();
@@ -8,11 +8,13 @@ export async function POST(request: Request) {
     if (!sku || typeof quantity !== "number" || quantity <= 0) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
-    const product = await Product.findOne({ sku });
+    const product = await Product.findOne({ "variants.sku": sku });
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    product.stock += quantity;
+    const variant = product.variants.find(v => v.sku === sku);
+    if (!variant) return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+    variant.stockQuantity += quantity;
     await product.save();
-    return NextResponse.json({ ok: true, stock: product.stock });
+    return NextResponse.json({ ok: true, stock: variant.stockQuantity });
 }
 
 

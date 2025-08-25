@@ -23,7 +23,7 @@ export default async function DashboardLayout({
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-semibold">
-              Fatema Fashion House
+              StockFlow
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               <Link href="/dashboard" className="hover:underline">
