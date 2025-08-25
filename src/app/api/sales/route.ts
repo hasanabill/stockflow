@@ -2,15 +2,18 @@ import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import Sale from "@/lib/models/sale";
 import Product from "@/lib/models/product";
+import { requireBusiness } from "@/lib/business";
 
 export async function GET() {
     await connectToDB();
-    const sales = await Sale.find().sort({ createdAt: -1 }).limit(200);
+    const businessId = await requireBusiness();
+    const sales = await Sale.find({ business: businessId }).sort({ createdAt: -1 }).limit(200);
     return NextResponse.json(sales);
 }
 
 export async function POST(request: Request) {
     await connectToDB();
+    const businessId = await requireBusiness();
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -35,7 +38,7 @@ export async function POST(request: Request) {
 
     // Adjust stock
     for (const item of items) {
-        const product = await Product.findById(item.productId);
+        const product = await Product.findOne({ _id: item.productId, business: businessId });
         if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
         const variant = product.variants.find(v => v.sku === item.variantSku);
         if (!variant) return NextResponse.json({ error: "Variant not found" }, { status: 404 });
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
         tax,
         total,
         notes,
+        business: businessId,
     });
 
     return NextResponse.json(sale, { status: 201 });

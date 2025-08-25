@@ -33,15 +33,12 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Products</h1>
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded bg-black text-white px-4 py-2"
-        >
+        <button onClick={() => setOpen(true)} className="btn btn-primary">
           New product
         </button>
       </div>
 
-      <div className="overflow-hidden rounded border">
+      <div className="overflow-hidden rounded card">
         <table className="min-w-full text-sm">
           <thead className="bg-black/5">
             <tr>
@@ -147,7 +144,7 @@ function CreateProductModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-xl bg-white text-black rounded-lg shadow">
+      <div className="w-full max-w-3xl card rounded-lg shadow">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="font-medium text-black">New product</div>
           <button onClick={onClose} className="text-sm">
@@ -182,10 +179,17 @@ function CreateProductModal({
               <button
                 type="button"
                 onClick={addVariant}
-                className="text-sm px-2 py-1 rounded border"
+                className="text-sm px-2 py-1 btn-outline rounded"
               >
                 Add variant
               </button>
+            </div>
+            <div className="hidden sm:grid grid-cols-5 gap-2 text-xs text-gray-600 px-1">
+              <div>SKU</div>
+              <div>Size</div>
+              <div>Color</div>
+              <div>Stock</div>
+              <div>Reorder</div>
             </div>
             <div className="space-y-3">
               {variants.map((v, idx) => (
@@ -243,7 +247,7 @@ function CreateProductModal({
                     <button
                       type="button"
                       onClick={() => removeVariant(idx)}
-                      className="text-sm px-2 py-1 rounded border"
+                      className="text-sm px-2 py-1 btn-outline rounded"
                     >
                       Remove
                     </button>
@@ -254,16 +258,12 @@ function CreateProductModal({
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded border"
-            >
+            <button type="button" onClick={onClose} className="btn btn-outline">
               Cancel
             </button>
             <button
               disabled={!canSubmit}
-              className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50"
             >
               Create
             </button>

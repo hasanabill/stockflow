@@ -22,6 +22,7 @@ export interface PurchaseOrder extends Document {
     tax?: number;
     total: number;
     notes?: string;
+    business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -46,10 +47,12 @@ const PurchaseOrderSchema = new Schema<PurchaseOrder>({
     tax: { type: Number, default: 0, min: 0 },
     total: { type: Number, required: true, min: 0 },
     notes: { type: String },
+    business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
 PurchaseOrderSchema.index({ reference: 1 }, { unique: true });
 PurchaseOrderSchema.index({ status: 1 });
+PurchaseOrderSchema.index({ business: 1 });
 
 const PurchaseOrderModel: Model<PurchaseOrder> = mongoose.models.PurchaseOrder || mongoose.model<PurchaseOrder>("PurchaseOrder", PurchaseOrderSchema);
 

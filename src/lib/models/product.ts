@@ -18,6 +18,7 @@ export interface Product extends Document {
     salePrice?: number;
     variants: ProductVariant[];
     defaultSupplier?: mongoose.Types.ObjectId | null;
+    business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -40,11 +41,13 @@ const ProductSchema = new Schema<Product>({
     salePrice: { type: Number, min: 0 },
     variants: { type: [VariantSchema], default: [] },
     defaultSupplier: { type: Schema.Types.ObjectId, ref: "Supplier", default: null },
+    business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
 // Helpful indexes
 ProductSchema.index({ name: 1 });
 ProductSchema.index({ category: 1 });
+ProductSchema.index({ business: 1 });
 // Attempt uniqueness for variant SKU across all products
 ProductSchema.index({ "variants.sku": 1 }, { unique: true, sparse: true });
 

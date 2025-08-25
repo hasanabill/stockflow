@@ -246,7 +246,7 @@ export default function DashboardClient() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded border p-4">
+        <div className="rounded card p-4">
           <div className="font-medium mb-2">Sales Trend (This Month)</div>
           <div className="h-64">
             {typeof window === "undefined" ? null : (
@@ -273,7 +273,7 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        <div className="rounded border p-4">
+        <div className="rounded card p-4">
           <div className="font-medium mb-2">Top Selling Products</div>
           <div className="h-64">
             {typeof window === "undefined" ? null : (
@@ -300,7 +300,7 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        <div className="rounded border p-4 lg:col-span-2">
+        <div className="rounded card p-4 lg:col-span-2">
           <div className="font-medium mb-2">
             Expense Categories (This Month)
           </div>
@@ -332,7 +332,7 @@ export default function DashboardClient() {
       </div>
 
       {/* Low stock */}
-      <div className="rounded border p-4">
+      <div className="rounded card p-4">
         <div className="font-medium mb-2">Low Stock Alerts</div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -375,8 +375,8 @@ export default function DashboardClient() {
 
 function KpiCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded border p-4">
-      <div className="text-sm text-gray-600">{title}</div>
+    <div className="rounded card p-4">
+      <div className="text-sm muted">{title}</div>
       <div className="text-2xl font-semibold">{value}</div>
     </div>
   );

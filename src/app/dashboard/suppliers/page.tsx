@@ -134,20 +134,17 @@ export default function SuppliersPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setOpenSupplier(true)}
-            className="rounded bg-black text-white px-4 py-2"
+            className="btn btn-primary"
           >
             Add supplier
           </button>
-          <button
-            onClick={() => setOpenPO(true)}
-            className="rounded border px-4 py-2"
-          >
+          <button onClick={() => setOpenPO(true)} className="btn btn-outline">
             New PO
           </button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded border">
+      <div className="overflow-hidden rounded card">
         <table className="min-w-full text-sm">
           <thead className="bg-black/5">
             <tr>
@@ -184,7 +181,7 @@ export default function SuppliersPage() {
 
       {openSupplier && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md bg-white text-black rounded-lg shadow">
+          <div className="w-full max-w-md card rounded-lg shadow">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-medium text-black">Add supplier</div>
               <button
@@ -195,41 +192,66 @@ export default function SuppliersPage() {
               </button>
             </div>
             <form onSubmit={createSupplier} className="p-4 space-y-3">
-              <input
-                value={supplierForm.name}
-                onChange={(e) =>
-                  setSupplierForm({ ...supplierForm, name: e.target.value })
-                }
-                className="w-full px-3 py-2 rounded border"
-                placeholder="Name"
-              />
-              <input
-                value={supplierForm.email}
-                onChange={(e) =>
-                  setSupplierForm({ ...supplierForm, email: e.target.value })
-                }
-                className="w-full px-3 py-2 rounded border"
-                placeholder="Email"
-              />
-              <input
-                value={supplierForm.phone}
-                onChange={(e) =>
-                  setSupplierForm({ ...supplierForm, phone: e.target.value })
-                }
-                className="w-full px-3 py-2 rounded border"
-                placeholder="Phone"
-              />
+              <div className="space-y-1">
+                <label
+                  htmlFor="supplier-name"
+                  className="text-xs text-gray-600"
+                >
+                  Name
+                </label>
+                <input
+                  id="supplier-name"
+                  value={supplierForm.name}
+                  onChange={(e) =>
+                    setSupplierForm({ ...supplierForm, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded border"
+                  placeholder="Name"
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="supplier-email"
+                  className="text-xs text-gray-600"
+                >
+                  Email
+                </label>
+                <input
+                  id="supplier-email"
+                  value={supplierForm.email}
+                  onChange={(e) =>
+                    setSupplierForm({ ...supplierForm, email: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded border"
+                  placeholder="Email"
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="supplier-phone"
+                  className="text-xs text-gray-600"
+                >
+                  Phone
+                </label>
+                <input
+                  id="supplier-phone"
+                  value={supplierForm.phone}
+                  onChange={(e) =>
+                    setSupplierForm({ ...supplierForm, phone: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded border"
+                  placeholder="Phone"
+                />
+              </div>
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setOpenSupplier(false)}
-                  className="px-4 py-2 rounded border"
+                  className="btn btn-outline"
                 >
                   Cancel
                 </button>
-                <button className="px-4 py-2 rounded bg-black text-white">
-                  Save
-                </button>
+                <button className="btn btn-primary">Save</button>
               </div>
             </form>
           </div>
@@ -238,7 +260,7 @@ export default function SuppliersPage() {
 
       {openPO && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-3xl bg-white text-black rounded-lg shadow">
+          <div className="w-full max-w-3xl card rounded-lg shadow">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-medium text-black">New purchase order</div>
               <button onClick={() => setOpenPO(false)} className="text-sm">
@@ -247,36 +269,60 @@ export default function SuppliersPage() {
             </div>
             <form onSubmit={createPO} className="p-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input
-                  value={poForm.reference}
-                  onChange={(e) =>
-                    setPoForm({ ...poForm, reference: e.target.value })
-                  }
-                  className="px-3 py-2 rounded border"
-                  placeholder="Reference"
-                />
-                <select
-                  value={poForm.supplier}
-                  onChange={(e) =>
-                    setPoForm({ ...poForm, supplier: e.target.value })
-                  }
-                  className="px-3 py-2 rounded border"
-                >
-                  <option value="">Select supplier</option>
-                  {suppliers.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="date"
-                  value={poForm.expectedDate}
-                  onChange={(e) =>
-                    setPoForm({ ...poForm, expectedDate: e.target.value })
-                  }
-                  className="px-3 py-2 rounded border"
-                />
+                <div className="space-y-1">
+                  <label htmlFor="po-ref" className="text-xs text-gray-600">
+                    Reference
+                  </label>
+                  <input
+                    id="po-ref"
+                    value={poForm.reference}
+                    onChange={(e) =>
+                      setPoForm({ ...poForm, reference: e.target.value })
+                    }
+                    className="px-3 py-2 rounded border w-full"
+                    placeholder="Reference"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label
+                    htmlFor="po-supplier"
+                    className="text-xs text-gray-600"
+                  >
+                    Supplier
+                  </label>
+                  <select
+                    id="po-supplier"
+                    value={poForm.supplier}
+                    onChange={(e) =>
+                      setPoForm({ ...poForm, supplier: e.target.value })
+                    }
+                    className="px-3 py-2 rounded border w-full"
+                  >
+                    <option value="">Select supplier</option>
+                    {suppliers.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label
+                    htmlFor="po-expected"
+                    className="text-xs text-gray-600"
+                  >
+                    Expected date
+                  </label>
+                  <input
+                    id="po-expected"
+                    type="date"
+                    value={poForm.expectedDate}
+                    onChange={(e) =>
+                      setPoForm({ ...poForm, expectedDate: e.target.value })
+                    }
+                    className="px-3 py-2 rounded border w-full"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -284,7 +330,7 @@ export default function SuppliersPage() {
                   <button
                     type="button"
                     onClick={addPOItem}
-                    className="text-sm px-2 py-1 rounded border"
+                    className="text-sm px-2 py-1 btn-outline rounded"
                   >
                     Add item
                   </button>
@@ -298,63 +344,99 @@ export default function SuppliersPage() {
                         key={idx}
                         className="grid grid-cols-1 md:grid-cols-5 gap-2"
                       >
-                        <select
-                          value={it.product}
-                          onChange={(e) =>
-                            updatePOItem(idx, {
-                              product: e.target.value,
-                              variantSku: "",
-                            })
-                          }
-                          className="px-2 py-2 rounded border"
-                        >
-                          <option value="">Product</option>
-                          {products.map((p) => (
-                            <option key={p._id} value={p._id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={it.variantSku}
-                          onChange={(e) =>
-                            updatePOItem(idx, { variantSku: e.target.value })
-                          }
-                          className="px-2 py-2 rounded border"
-                          disabled={!product}
-                        >
-                          <option value="">Variant</option>
-                          {variants.map((v) => (
-                            <option key={v.sku} value={v.sku}>{`${
-                              v.size ?? "-"
-                            }/${v.color ?? "-"} (${v.sku})`}</option>
-                          ))}
-                        </select>
-                        <input
-                          type="number"
-                          min={1}
-                          value={it.quantityOrdered}
-                          onChange={(e) =>
-                            updatePOItem(idx, {
-                              quantityOrdered: Number(e.target.value) || 1,
-                            })
-                          }
-                          className="px-2 py-2 rounded border"
-                          placeholder="Qty"
-                        />
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={it.unitCost}
-                          onChange={(e) =>
-                            updatePOItem(idx, {
-                              unitCost: Number(e.target.value) || 0,
-                            })
-                          }
-                          className="px-2 py-2 rounded border"
-                          placeholder="Unit cost"
-                        />
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`po-item-${idx}-product`}
+                            className="text-xs text-gray-600"
+                          >
+                            Product
+                          </label>
+                          <select
+                            id={`po-item-${idx}-product`}
+                            value={it.product}
+                            onChange={(e) =>
+                              updatePOItem(idx, {
+                                product: e.target.value,
+                                variantSku: "",
+                              })
+                            }
+                            className="px-2 py-2 rounded border w-full"
+                          >
+                            <option value="">Product</option>
+                            {products.map((p) => (
+                              <option key={p._id} value={p._id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`po-item-${idx}-variant`}
+                            className="text-xs text-gray-600"
+                          >
+                            Variant
+                          </label>
+                          <select
+                            id={`po-item-${idx}-variant`}
+                            value={it.variantSku}
+                            onChange={(e) =>
+                              updatePOItem(idx, { variantSku: e.target.value })
+                            }
+                            className="px-2 py-2 rounded border w-full"
+                            disabled={!product}
+                          >
+                            <option value="">Variant</option>
+                            {variants.map((v) => (
+                              <option key={v.sku} value={v.sku}>{`${
+                                v.size ?? "-"
+                              }/${v.color ?? "-"} (${v.sku})`}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`po-item-${idx}-qty`}
+                            className="text-xs text-gray-600"
+                          >
+                            Qty
+                          </label>
+                          <input
+                            id={`po-item-${idx}-qty`}
+                            type="number"
+                            min={1}
+                            value={it.quantityOrdered}
+                            onChange={(e) =>
+                              updatePOItem(idx, {
+                                quantityOrdered: Number(e.target.value) || 1,
+                              })
+                            }
+                            className="px-2 py-2 rounded border w-full"
+                            placeholder="Qty"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`po-item-${idx}-cost`}
+                            className="text-xs text-gray-600"
+                          >
+                            Unit cost
+                          </label>
+                          <input
+                            id={`po-item-${idx}-cost`}
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={it.unitCost}
+                            onChange={(e) =>
+                              updatePOItem(idx, {
+                                unitCost: Number(e.target.value) || 0,
+                              })
+                            }
+                            className="px-2 py-2 rounded border w-full"
+                            placeholder="Unit cost"
+                          />
+                        </div>
                         <div className="flex items-center gap-2">
                           <div className="text-sm text-gray-600 w-full">
                             {(it.quantityOrdered * it.unitCost).toFixed(2)}
@@ -362,7 +444,7 @@ export default function SuppliersPage() {
                           <button
                             type="button"
                             onClick={() => removePOItem(idx)}
-                            className="text-sm px-2 py-1 rounded border"
+                            className="text-sm px-2 py-1 btn-outline rounded"
                           >
                             Remove
                           </button>
@@ -394,13 +476,11 @@ export default function SuppliersPage() {
                 <button
                   type="button"
                   onClick={() => setOpenPO(false)}
-                  className="px-4 py-2 rounded border"
+                  className="btn btn-outline"
                 >
                   Cancel
                 </button>
-                <button className="px-4 py-2 rounded bg-black text-white">
-                  Create PO
-                </button>
+                <button className="btn btn-primary">Create PO</button>
               </div>
             </form>
           </div>

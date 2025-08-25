@@ -2,20 +2,23 @@ import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
 import Product from "@/lib/models/product";
+import { requireBusiness } from "@/lib/business";
 
 type Params = { params: { id: string } };
 
 export async function GET(_req: Request, { params }: Params) {
     await connectToDB();
-    const po = await PurchaseOrder.findById(params.id);
+    const businessId = await requireBusiness();
+    const po = await PurchaseOrder.findOne({ _id: params.id, business: businessId });
     if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(po);
 }
 
 export async function PATCH(request: Request, { params }: Params) {
     await connectToDB();
+    const businessId = await requireBusiness();
     const body = await request.json();
-    const updated = await PurchaseOrder.findByIdAndUpdate(params.id, body, { new: true });
+    const updated = await PurchaseOrder.findOneAndUpdate({ _id: params.id, business: businessId }, body, { new: true });
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(updated);
 }
@@ -23,13 +26,14 @@ export async function PATCH(request: Request, { params }: Params) {
 // Mark received and increase stock
 export async function PUT(request: Request, { params }: Params) {
     await connectToDB();
+    const businessId = await requireBusiness();
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
     const { status, items } = body as { status?: string; items?: Array<{ product: string; variantSku: string; quantityReceived: number }> };
 
-    const po = await PurchaseOrder.findById(params.id);
+    const po = await PurchaseOrder.findOne({ _id: params.id, business: businessId });
     if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     if (status === "received" || status === "received".toUpperCase()) {

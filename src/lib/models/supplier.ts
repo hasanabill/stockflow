@@ -7,6 +7,7 @@ export interface Supplier extends Document {
     address?: string;
     notes?: string;
     isActive: boolean;
+    business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -18,9 +19,11 @@ const SupplierSchema = new Schema<Supplier>({
     address: { type: String },
     notes: { type: String },
     isActive: { type: Boolean, default: true },
+    business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
 SupplierSchema.index({ name: 1 }, { unique: true });
+SupplierSchema.index({ business: 1 });
 
 const SupplierModel: Model<Supplier> = mongoose.models.Supplier || mongoose.model<Supplier>("Supplier", SupplierSchema);
 

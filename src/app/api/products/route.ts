@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import Product from "@/lib/models/product";
+import { requireBusiness } from "@/lib/business";
 
 export async function GET() {
     await connectToDB();
-    const products = await Product.find().sort({ createdAt: -1 });
+    const businessId = await requireBusiness();
+    const products = await Product.find({ business: businessId }).sort({ createdAt: -1 });
     return NextResponse.json(products);
 }
 
 export async function POST(request: Request) {
     await connectToDB();
+    const businessId = await requireBusiness();
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
     try {
-        const created = await Product.create({ name, salePrice, costPrice, category, brand, description, variants });
+        const created = await Product.create({ name, salePrice, costPrice, category, brand, description, variants, business: businessId });
         return NextResponse.json(created, { status: 201 });
     } catch (e) {
         const message = e instanceof Error ? e.message : "Unknown error";

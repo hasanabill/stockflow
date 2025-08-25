@@ -80,15 +80,12 @@ export default function ExpensesPage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded bg-black text-white px-4 py-2"
-        >
+        <button onClick={() => setOpen(true)} className="btn btn-primary">
           Add expense
         </button>
       </div>
 
-      <div className="overflow-hidden rounded border">
+      <div className="overflow-hidden rounded card">
         <table className="min-w-full text-sm">
           <thead className="bg-black/5">
             <tr>
@@ -129,7 +126,7 @@ export default function ExpensesPage() {
 
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-lg bg-white text-black rounded-lg shadow">
+          <div className="w-full max-w-lg card rounded-lg shadow">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="font-medium text-black">Add expense</div>
               <button onClick={() => setOpen(false)} className="text-sm">
@@ -186,13 +183,11 @@ export default function ExpensesPage() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2 rounded border"
+                  className="btn btn-outline"
                 >
                   Cancel
                 </button>
-                <button className="px-4 py-2 rounded bg-black text-white">
-                  Save
-                </button>
+                <button className="btn btn-primary">Save</button>
               </div>
             </form>
           </div>

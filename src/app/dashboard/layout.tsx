@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { auth, signOut } from "@/auth";
 import Link from "next/link";
+import BusinessSwitcher from "@/app/components/BusinessSwitcher";
 
 export default async function DashboardLayout({
   children,
@@ -19,7 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="border-b">
+      <header className="border-b card">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-semibold">
@@ -38,10 +39,17 @@ export default async function DashboardLayout({
               <Link href="/dashboard/products" className="hover:underline">
                 Products
               </Link>
+              <Link href="/dashboard/expenses" className="hover:underline">
+                Expenses
+              </Link>
+              <Link href="/dashboard/suppliers" className="hover:underline">
+                Suppliers
+              </Link>
             </nav>
+            <BusinessSwitcher />
           </div>
           <form action={doSignOut}>
-            <button type="submit" className="text-sm border px-3 py-1 rounded">
+            <button type="submit" className="btn btn-outline">
               Sign out
             </button>
           </form>

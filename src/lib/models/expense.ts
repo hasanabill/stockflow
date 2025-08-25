@@ -8,6 +8,7 @@ export interface Expense extends Document {
     amount: number;
     description?: string;
     supplier?: mongoose.Types.ObjectId | null;
+    business: mongoose.Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -18,10 +19,12 @@ const ExpenseSchema = new Schema<Expense>({
     amount: { type: Number, required: true, min: 0 },
     description: { type: String },
     supplier: { type: Schema.Types.ObjectId, ref: "Supplier", default: null },
+    business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
 ExpenseSchema.index({ date: -1 });
 ExpenseSchema.index({ category: 1 });
+ExpenseSchema.index({ business: 1 });
 
 const ExpenseModel: Model<Expense> = mongoose.models.Expense || mongoose.model<Expense>("Expense", ExpenseSchema);
 

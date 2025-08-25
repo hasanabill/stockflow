@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
+import { requireBusiness } from "@/lib/business";
 
 export async function GET() {
     await connectToDB();
-    const pos = await PurchaseOrder.find().sort({ createdAt: -1 }).limit(200);
+    const businessId = await requireBusiness();
+    const pos = await PurchaseOrder.find({ business: businessId }).sort({ createdAt: -1 }).limit(200);
     return NextResponse.json(pos);
 }
 
 export async function POST(request: Request) {
     await connectToDB();
+    const businessId = await requireBusiness();
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -20,7 +23,7 @@ export async function POST(request: Request) {
     }
     const subtotal = items.reduce((s: number, it: any) => s + (it.quantityOrdered * it.unitCost), 0);
     const total = subtotal + Number(tax || 0);
-    const po = await PurchaseOrder.create({ reference, supplier, expectedDate, items: items.map((i: any) => ({ ...i, quantityReceived: i.quantityReceived || 0, lineTotal: i.quantityOrdered * i.unitCost })), subtotal, tax, total, status: "ordered", notes });
+    const po = await PurchaseOrder.create({ reference, supplier, expectedDate, items: items.map((i: any) => ({ ...i, quantityReceived: i.quantityReceived || 0, lineTotal: i.quantityOrdered * i.unitCost })), subtotal, tax, total, status: "ordered", notes, business: businessId });
     return NextResponse.json(po, { status: 201 });
 }
 
