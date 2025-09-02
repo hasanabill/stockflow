@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
-import { requireBusiness } from "@/lib/business";
+import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 
 export async function GET() {
     await connectToDB();
@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
     await connectToDB();
-    const businessId = await requireBusiness();
+    const { businessId } = await requireBusinessAccess("write");
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

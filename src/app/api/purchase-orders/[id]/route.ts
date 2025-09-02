@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
 import Product from "@/lib/models/product";
-import { requireBusiness } from "@/lib/business";
+import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 
 type Params = { params: { id: string } };
 
@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
     await connectToDB();
-    const businessId = await requireBusiness();
+    const { businessId } = await requireBusinessAccess("write");
     const body = await request.json();
     const updated = await PurchaseOrder.findOneAndUpdate({ _id: params.id, business: businessId }, body, { new: true });
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: Params) {
 // Mark received and increase stock
 export async function PUT(request: Request, { params }: Params) {
     await connectToDB();
-    const businessId = await requireBusiness();
+    const { businessId } = await requireBusinessAccess("write");
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -69,7 +69,8 @@ export async function PUT(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
     await connectToDB();
-    const deleted = await PurchaseOrder.findByIdAndDelete(params.id);
+    const { businessId } = await requireBusinessAccess("write");
+    const deleted = await PurchaseOrder.findOneAndDelete({ _id: params.id, business: businessId });
     if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
 }

@@ -48,8 +48,8 @@ const ProductSchema = new Schema<Product>({
 ProductSchema.index({ name: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ business: 1 });
-// Attempt uniqueness for variant SKU across all products
-ProductSchema.index({ "variants.sku": 1 }, { unique: true, sparse: true });
+// Ensure variant SKU is unique per business
+ProductSchema.index({ business: 1, "variants.sku": 1 }, { unique: true, sparse: true });
 
 const ProductModel: Model<Product> = mongoose.models.Product || mongoose.model<Product>("Product", ProductSchema);
 

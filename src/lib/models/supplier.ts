@@ -22,7 +22,7 @@ const SupplierSchema = new Schema<Supplier>({
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
-SupplierSchema.index({ name: 1 }, { unique: true });
+SupplierSchema.index({ business: 1, name: 1 }, { unique: true });
 SupplierSchema.index({ business: 1 });
 
 const SupplierModel: Model<Supplier> = mongoose.models.Supplier || mongoose.model<Supplier>("Supplier", SupplierSchema);

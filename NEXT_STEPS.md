@@ -57,7 +57,7 @@ tasks:
       - postReceipt and postSale update ledger+snapshot atomically.
   - id: T1.3
     name: Replace direct stock mutations with service calls
-    depends_on: [T1.2]
+    depends_on: [T1.2, T0.3]
     files:
       - src/app/api/products/stock/route.ts
       - src/app/api/sales/route.ts
@@ -66,7 +66,7 @@ tasks:
       - All stock changes go through inventory service.
   - id: T2.1
     name: Enhance PO receipt endpoint with partial receipts and costing
-    depends_on: [T1.2]
+    depends_on: [T1.2, T0.3]
     files:
       - src/app/api/purchase-orders/[id]/route.ts
     acceptance:
@@ -87,7 +87,7 @@ tasks:
       - Sale has status: draft|confirmed|delivered|canceled.
   - id: T3.2
     name: Split sales endpoints (create/confirm/deliver/cancel)
-    depends_on: [T3.1, T1.2]
+    depends_on: [T3.1, T1.2, T0.3]
     files:
       - src/app/api/sales/route.ts
       - src/app/api/sales/[id]/confirm/route.ts
@@ -112,7 +112,7 @@ tasks:
       - Atomic `$inc` counter per business key.
   - id: T4.2
     name: Add Invoice model and create endpoint
-    depends_on: [T4.1, T3.2]
+    depends_on: [T4.1, T3.2, T0.3]
     files:
       - src/lib/models/invoice.ts
       - src/app/api/invoices/[saleId]/create/route.ts
@@ -157,6 +157,14 @@ tasks:
       - src/app/dashboard/reports/stock/page.tsx
     acceptance:
       - Sum of `onHand * averageCost` from snapshots.
+  - id: T5.4
+    name: Payments received summary report
+    depends_on: [T4.4]
+    files:
+      - src/app/api/reports/payments/route.ts
+      - src/app/dashboard/reports/payments/page.tsx
+    acceptance:
+      - Aggregates payments by period (and optionally by method).
   - id: T6.1
     name: Add ProductType and attributes validation (Option A)
     depends_on: []
@@ -192,15 +200,17 @@ tasks:
       - All inputs validated; clear errors returned.
   - id: T8.2
     name: Strengthen requireBusinessAccess across routes
-    depends_on: []
+    depends_on: [T13.1]
     files:
       - src/lib/business.ts
       - src/app/api/**
     acceptance:
       - Read/write checks and role mapping enforced.
+      - Staff limited to: sales (create/confirm/deliver/cancel), invoices, payments, stock search.
+      - Staff cannot: purchasing (PO/receipts), product type/schema edits, expenses, user/membership management.
   - id: T9.1
     name: Dashboard KPIs use reports (accurate profit)
-    depends_on: [T5.1]
+    depends_on: [T5.1, T13.1]
     files:
       - src/app/dashboard/DashboardClient.tsx
     acceptance:
@@ -247,6 +257,164 @@ tasks:
       - vercel config / env
     acceptance:
       - App deployed with proper env vars and monitoring.
+  - id: T12.1
+    name: Create Customer model and API
+    depends_on: []
+    files:
+      - src/lib/models/customer.ts
+      - src/app/api/customers/route.ts
+      - src/app/api/customers/[id]/route.ts
+    acceptance:
+      - Customer CRUD with business scoping; used in sales.
+  - id: T12.2
+    name: Add Customer UI pages
+    depends_on: [T12.1]
+    files:
+      - src/app/dashboard/customers/page.tsx
+    acceptance:
+      - Customer list, create, edit, delete UI.
+  - id: T13.1
+    name: Fix role model mismatch (scope vs current)
+    depends_on: []
+    files:
+      - src/lib/models/Business.ts
+      - src/lib/business.ts
+      - src/models/user.ts
+    acceptance:
+      - Roles match scope: ADMIN, MODERATOR, STAFF (not admin/staff/viewer).
+  - id: T13.2
+    name: Add global Admin role support
+    depends_on: [T13.1]
+    files:
+      - src/models/user.ts
+      - src/lib/business.ts
+      - src/app/api/businesses/route.ts
+    acceptance:
+      - Global Admin can access all businesses; separate from business owners.
+  - id: T13.3
+    name: Add Membership model (separate from Business.members)
+    depends_on: [T13.1]
+    files:
+      - src/lib/models/membership.ts
+    acceptance:
+      - Separate Membership collection as per scope.md domain model.
+  - id: T14.1
+    name: Add Business slug and status fields
+    depends_on: []
+    files:
+      - src/lib/models/Business.ts
+    acceptance:
+      - Business has slug (for URLs) and status fields as per scope.
+  - id: T14.2
+    name: Add audit fields to all models
+    depends_on: []
+    files:
+      - src/lib/models/*.ts
+    acceptance:
+      - All models have createdAt, createdBy, updatedAt, updatedBy.
+  - id: T14.3
+    name: Normalize status enums per scope (PO/Sale)
+    depends_on: []
+    files:
+      - src/lib/models/purchaseOrder.ts
+      - src/lib/models/sale.ts
+    acceptance:
+      - PurchaseOrder status includes 'partially_received' and uses 'canceled'.
+      - Sale status strings match: draft|confirmed|delivered|canceled.
+  - id: T15.1
+    name: Add AJV for dynamic ProductType validation
+    depends_on: [T6.1, T8.1]
+    files:
+      - package.json
+      - src/lib/validation/productAttributes.ts
+    acceptance:
+      - Product attributes validated against JSON Schema dynamically.
+  - id: T15.2
+    name: Add rate limiting to sensitive routes
+    depends_on: []
+    files:
+      - src/middleware.ts
+      - src/app/api/auth/**
+      - src/app/api/invoices/**
+    acceptance:
+      - Auth and invoice generation routes are rate limited.
+  - id: T16.1
+    name: Add Sentry error tracking
+    depends_on: []
+    files:
+      - package.json
+      - src/lib/observability/sentry.ts
+    acceptance:
+      - Production errors tracked in Sentry.
+  - id: T16.2
+    name: Add structured logging with request IDs
+    depends_on: []
+    files:
+      - src/lib/observability/logger.ts
+      - src/middleware.ts
+    acceptance:
+      - All logs include request ID and businessId context.
+  - id: T17.1
+    name: Add data seeding script
+    depends_on: [T13.1, T12.1]
+    files:
+      - scripts/seed.ts
+    acceptance:
+      - Admin user, sample businesses, products, transactions created.
+  - id: T17.2
+    name: Add environment validation
+    depends_on: []
+    files:
+      - src/lib/config/env.ts
+    acceptance:
+      - Required env vars validated at startup.
+  - id: T18.1
+    name: Add TanStack Query for client-side data fetching
+    depends_on: []
+    files:
+      - package.json
+      - src/lib/providers/query.tsx
+    acceptance:
+      - Client-side caching and mutations use TanStack Query.
+  - id: T18.2
+    name: Add react-hook-form + Zod to forms
+    depends_on: []
+    files:
+      - package.json
+      - src/app/dashboard/**/page.tsx
+    acceptance:
+      - All forms use react-hook-form with Zod validation.
+  - id: T19.1
+    name: Add proper error boundaries
+    depends_on: []
+    files:
+      - src/app/error.tsx
+      - src/app/global-error.tsx
+    acceptance:
+      - Graceful error handling with user-friendly messages.
+  - id: T19.2
+    name: Add loading states and skeletons
+    depends_on: []
+    files:
+      - src/app/dashboard/**/page.tsx
+      - src/app/components/LoadingSkeleton.tsx
+    acceptance:
+      - All pages show loading states during data fetching.
+  - id: T20.1
+    name: Add proper TypeScript strict mode
+    depends_on: []
+    files:
+      - tsconfig.json
+      - src/**/*.ts
+    acceptance:
+      - No TypeScript errors in strict mode.
+  - id: T20.2
+    name: Add ESLint rules for code quality
+    depends_on: []
+    files:
+      - eslint.config.mjs
+    acceptance:
+      - Consistent code style and best practices enforced.
 ```
 
 ### 0) Quick safety and tenancy fixes
@@ -325,8 +493,8 @@ tasks:
   - Endpoint: `POST /api/invoices/:saleId/create` increments counter and persists invoice.
   - Files: `src/lib/models/invoice.ts`, `src/app/api/invoices/[saleId]/create/route.ts`.
 - [ ] Printable HTML invoice page
-  - Route: `/(dashboard)/[businessId]/invoices/[id]/print` rendering clean HTML and print CSS.
-  - Files: `src/app/dashboard/[businessId]/invoices/[id]/print/page.tsx` (or adapt current layout).
+  - Route: `/(dashboard)/invoices/[id]/print` rendering clean HTML and print CSS.
+  - Files: `src/app/dashboard/invoices/[id]/print/page.tsx`.
 - [ ] Add `Payment` model and API (record-only)
   - Fields: `business`, `invoiceId`, `amount`, `method`, `paidAt`, `notes?`.
   - Endpoint: `POST /api/payments` to record payments and update `amountPaid`.
@@ -401,6 +569,92 @@ tasks:
 - [ ] Deploy to Vercel (Node runtime for server actions and print view).
 - [ ] Configure production logging and Sentry.
 
+### 12) Customer management (in scope)
+
+- [ ] Create Customer model and API
+  - Fields: `business`, `name`, `email?`, `phone?`, `address?`, `notes?`, `isActive`.
+  - Endpoints: `GET/POST /api/customers`, `GET/PATCH/DELETE /api/customers/[id]`.
+  - Files: `src/lib/models/customer.ts`, `src/app/api/customers/route.ts`, `src/app/api/customers/[id]/route.ts`.
+- [ ] Add Customer UI pages
+  - Customer list, create, edit, delete UI.
+  - Files: `src/app/dashboard/customers/page.tsx`.
+
+### 13) Role model fixes (scope mismatch)
+
+- [ ] Fix role model mismatch (scope vs current)
+  - Current: `admin | staff | viewer` in Business model
+  - Scope: `ADMIN | MODERATOR | STAFF` in separate Membership model
+  - Files: `src/lib/models/Business.ts`, `src/lib/business.ts`, `src/models/user.ts`.
+- [ ] Add global Admin role support
+  - Global Admin can access all businesses; separate from business owners.
+  - Files: `src/models/user.ts`, `src/lib/business.ts`, `src/app/api/businesses/route.ts`.
+- [ ] Add Membership model (separate from Business.members)
+  - Separate Membership collection as per scope.md domain model.
+  - Files: `src/lib/models/membership.ts`.
+
+### 14) Model completeness (scope requirements)
+
+- [ ] Add Business slug and status fields
+  - Business has slug (for URLs) and status fields as per scope.
+  - Files: `src/lib/models/Business.ts`.
+- [ ] Add audit fields to all models
+  - All models have `createdAt`, `createdBy`, `updatedAt`, `updatedBy`.
+  - Files: `src/lib/models/*.ts`.
+
+### 15) Advanced validation and security
+
+- [ ] Add AJV for dynamic ProductType validation
+  - Product attributes validated against JSON Schema dynamically.
+  - Files: `package.json`, `src/lib/validation/productAttributes.ts`.
+- [ ] Add rate limiting to sensitive routes
+  - Auth and invoice generation routes are rate limited.
+  - Files: `src/middleware.ts`, `src/app/api/auth/**`, `src/app/api/invoices/**`.
+
+### 16) Observability and monitoring
+
+- [ ] Add Sentry error tracking
+  - Production errors tracked in Sentry.
+  - Files: `package.json`, `src/lib/observability/sentry.ts`.
+- [ ] Add structured logging with request IDs
+  - All logs include request ID and businessId context.
+  - Files: `src/lib/observability/logger.ts`, `src/middleware.ts`.
+
+### 17) Development and deployment tools
+
+- [ ] Add data seeding script
+  - Admin user, sample businesses, products, transactions created.
+  - Files: `scripts/seed.ts`.
+- [ ] Add environment validation
+  - Required env vars validated at startup.
+  - Files: `src/lib/config/env.ts`.
+
+### 18) Frontend architecture (scope requirements)
+
+- [ ] Add TanStack Query for client-side data fetching
+  - Client-side caching and mutations use TanStack Query.
+  - Files: `package.json`, `src/lib/providers/query.tsx`.
+- [ ] Add react-hook-form + Zod to forms
+  - All forms use react-hook-form with Zod validation.
+  - Files: `package.json`, `src/app/dashboard/**/page.tsx`.
+
+### 19) User experience improvements
+
+- [ ] Add proper error boundaries
+  - Graceful error handling with user-friendly messages.
+  - Files: `src/app/error.tsx`, `src/app/global-error.tsx`.
+- [ ] Add loading states and skeletons
+  - All pages show loading states during data fetching.
+  - Files: `src/app/dashboard/**/page.tsx`, `src/app/components/LoadingSkeleton.tsx`.
+
+### 20) Code quality and standards
+
+- [ ] Add proper TypeScript strict mode
+  - No TypeScript errors in strict mode.
+  - Files: `tsconfig.json`, `src/**/*.ts`.
+- [ ] Add ESLint rules for code quality
+  - Consistent code style and best practices enforced.
+  - Files: `eslint.config.mjs`.
+
 ## Notes and Decisions
 
 - Profit recognition at delivery; no backorders.
@@ -410,10 +664,47 @@ tasks:
 ## Suggested sequencing (timeline)
 
 1. Safety and tenancy fixes (0.5–1 day)
-2. Inventory backbone with transactions (3–5 days)
-3. PO receipt and moving average (1–2 days)
-4. Sales lifecycle + invoices + payments (4–6 days)
-5. Reporting (2–3 days)
-6. Product attributes/product types (2–4 days; optional now)
-7. Audit logging (2–3 days)
-8. Validation/tests/polish (ongoing)
+2. Role model fixes and Customer management (1–2 days)
+3. Model completeness and audit fields (0.5–1 day)
+4. Inventory backbone with transactions (3–5 days)
+5. PO receipt and moving average (1–2 days)
+6. Sales lifecycle + invoices + payments (4–6 days)
+7. Reporting (2–3 days)
+8. Product attributes/product types (2–4 days; optional now)
+9. Audit logging (2–3 days)
+10. Frontend architecture improvements (2–3 days)
+11. Observability and monitoring (1–2 days)
+12. Development tools and seeding (1–2 days)
+13. UX improvements and code quality (ongoing)
+14. Validation/tests/polish (ongoing)
+
+## Key Missing Items Identified
+
+### Critical Gaps (Must Fix)
+1. **Customer Management**: No Customer model or UI (required for sales)
+2. **Role Model Mismatch**: Current `admin/staff/viewer` vs scope `ADMIN/MODERATOR/STAFF`
+3. **Missing Membership Model**: Scope requires separate Membership collection
+4. **Global Admin Role**: No support for global Admin accessing all businesses
+5. **Audit Fields**: Missing `createdBy`, `updatedBy` on all models
+6. **Business Fields**: Missing `slug` and `status` fields
+
+### Architecture Gaps
+1. **Frontend Stack**: Missing TanStack Query and react-hook-form (per scope)
+2. **Validation**: No AJV for dynamic ProductType validation
+3. **Observability**: No Sentry, structured logging, or request IDs
+4. **Security**: No rate limiting on sensitive routes
+5. **Error Handling**: No error boundaries or proper loading states
+
+### Development Experience
+1. **Data Seeding**: No script to create sample data
+2. **Environment Validation**: No startup validation of required env vars
+3. **Code Quality**: TypeScript not in strict mode, basic ESLint rules
+4. **Testing**: No test setup or structure
+
+### UI/UX Gaps
+1. **Customer Pages**: No customer management UI
+2. **Loading States**: No skeletons or loading indicators
+3. **Error Boundaries**: No graceful error handling
+4. **Form Validation**: No client-side validation with Zod
+
+These additions bring the total task count from 43 to 67 tasks, ensuring complete alignment with scope.md requirements.

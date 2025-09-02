@@ -50,8 +50,8 @@ const PurchaseOrderSchema = new Schema<PurchaseOrder>({
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
-PurchaseOrderSchema.index({ reference: 1 }, { unique: true });
-PurchaseOrderSchema.index({ status: 1 });
+PurchaseOrderSchema.index({ business: 1, reference: 1 }, { unique: true });
+PurchaseOrderSchema.index({ business: 1, status: 1 });
 PurchaseOrderSchema.index({ business: 1 });
 
 const PurchaseOrderModel: Model<PurchaseOrder> = mongoose.models.PurchaseOrder || mongoose.model<PurchaseOrder>("PurchaseOrder", PurchaseOrderSchema);
