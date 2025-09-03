@@ -36,20 +36,7 @@ export async function POST(request: Request) {
     }
     const total = Math.max(0, subtotal - (discount || 0) + (tax || 0));
 
-    // Adjust stock
-    for (const item of items) {
-        const product = await Product.findOne({ _id: item.productId, business: businessId });
-        if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-        const variant = product.variants.find(v => v.sku === item.variantSku);
-        if (!variant) return NextResponse.json({ error: "Variant not found" }, { status: 404 });
-        if (variant.stockQuantity < item.quantity) {
-            return NextResponse.json({ error: `Insufficient stock for ${item.variantSku}` }, { status: 400 });
-        }
-        variant.stockQuantity -= item.quantity;
-        await product.save();
-    }
-
-    // Persist the sale
+    // Persist the sale as DRAFT (no stock impact)
     const saleItems = items.map(i => ({
         product: i.productId,
         variantSku: i.variantSku,
@@ -65,6 +52,7 @@ export async function POST(request: Request) {
         tax,
         total,
         notes,
+        status: "draft",
         business: businessId,
     });
 

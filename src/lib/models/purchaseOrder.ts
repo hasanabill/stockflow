@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-export type PurchaseOrderStatus = "draft" | "ordered" | "received" | "cancelled";
+export type PurchaseOrderStatus = "draft" | "ordered" | "partially_received" | "received" | "cancelled";
 
 export interface PurchaseOrderItem {
     product: mongoose.Types.ObjectId;
@@ -39,7 +39,7 @@ const PurchaseOrderItemSchema = new Schema<PurchaseOrderItem>({
 const PurchaseOrderSchema = new Schema<PurchaseOrder>({
     reference: { type: String, required: true, trim: true },
     supplier: { type: Schema.Types.ObjectId, ref: "Supplier", required: true },
-    status: { type: String, required: true, enum: ["draft", "ordered", "received", "cancelled"], default: "draft" },
+    status: { type: String, required: true, enum: ["draft", "ordered", "partially_received", "received", "cancelled"], default: "draft" },
     expectedDate: { type: Date },
     receivedDate: { type: Date },
     items: { type: [PurchaseOrderItemSchema], required: true },

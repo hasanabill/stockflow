@@ -17,9 +17,10 @@ type SaleItemInput = {
 type Sale = {
   _id: string;
   createdAt: string;
-  items: { variantSku: string; quantity: number }[];
+  items: { product: string; variantSku: string; quantity: number; unitPrice: number; lineTotal: number }[];
   subtotal: number;
   total: number;
+  status: "draft" | "confirmed" | "delivered" | "canceled";
 };
 
 export default function SalesPage() {
@@ -84,6 +85,35 @@ export default function SalesPage() {
     setItems([{ productId: "", variantSku: "", quantity: 1, unitPrice: 0 }]);
     setDiscount(0);
     setTax(0);
+  }
+
+  async function refreshSales() {
+    const res = await fetch("/api/sales");
+    if (res.ok) setSales(await res.json());
+  }
+
+  async function confirmSale(id: string) {
+    const res = await fetch(`/api/sales/${id}/confirm`, { method: "POST" });
+    if (!res.ok) return;
+    const updated = await res.json();
+    setSales((prev) => prev.map((s) => (s._id === id ? updated : s)));
+  }
+
+  async function deliverSale(id: string) {
+    const res = await fetch(`/api/sales/${id}/deliver`, { method: "POST" });
+    if (!res.ok) return;
+    const updated = await res.json();
+    setSales((prev) => prev.map((s) => (s._id === id ? updated : s)));
+  }
+
+  async function cancelSale(id: string) {
+    const res = await fetch(`/api/sales/${id}/cancel`, { method: "POST" });
+    if (!res.ok) return;
+    const updated = await res.json();
+    setSales((prev) => prev.map((s) => (s._id === id ? updated : s)));
+    // optionally refresh products as stock may be restored
+    const prodRes = await fetch("/api/products");
+    if (prodRes.ok) setProducts(await prodRes.json());
   }
 
   return (
@@ -263,18 +293,20 @@ export default function SalesPage() {
               <th className="text-left p-3">Items</th>
               <th className="text-left p-3">Subtotal</th>
               <th className="text-left p-3">Total</th>
+              <th className="text-left p-3">Status</th>
+              <th className="text-left p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className="p-3" colSpan={4}>
+                <td className="p-3" colSpan={6}>
                   Loading…
                 </td>
               </tr>
             ) : sales.length === 0 ? (
               <tr>
-                <td className="p-3" colSpan={4}>
+                <td className="p-3" colSpan={6}>
                   No sales
                 </td>
               </tr>
@@ -285,12 +317,40 @@ export default function SalesPage() {
                     {new Date(s.createdAt).toLocaleString()}
                   </td>
                   <td className="p-3">
-                    {s.items
-                      .map((i) => `${i.variantSku} x${i.quantity}`)
-                      .join(", ")}
+                    {s.items.map((i) => `${i.variantSku} x${i.quantity}`).join(", ")}
                   </td>
                   <td className="p-3">{Number(s.subtotal).toFixed(2)}</td>
                   <td className="p-3">{Number(s.total).toFixed(2)}</td>
+                  <td className="p-3 capitalize">{s.status}</td>
+                  <td className="p-3">
+                    {s.status === "draft" && (
+                      <button
+                        onClick={() => confirmSale(s._id)}
+                        className="text-xs px-2 py-1 btn-outline rounded mr-2"
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {s.status === "confirmed" && (
+                      <>
+                        <button
+                          onClick={() => deliverSale(s._id)}
+                          className="text-xs px-2 py-1 btn-outline rounded mr-2"
+                        >
+                          Deliver
+                        </button>
+                        <button
+                          onClick={() => cancelSale(s._id)}
+                          className="text-xs px-2 py-1 btn-outline rounded"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                    {(s.status === "delivered" || s.status === "canceled") && (
+                      <span className="text-xs text-gray-500">No actions</span>
+                    )}
+                  </td>
                 </tr>
               ))
             )}

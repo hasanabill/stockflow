@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
-import Product from "@/lib/models/product";
+import { postReceipt } from "@/lib/services/inventory";
+import GoodsReceipt from "@/lib/models/goodsReceipt";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 
 type Params = { params: { id: string } };
@@ -31,40 +32,53 @@ export async function PUT(request: Request, { params }: Params) {
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
-    const { status, items } = body as { status?: string; items?: Array<{ product: string; variantSku: string; quantityReceived: number }> };
+    const { items } = body as { status?: string; items?: Array<{ product: string; variantSku: string; quantityReceived: number }> };
 
     const po = await PurchaseOrder.findOne({ _id: params.id, business: businessId });
     if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (status === "received" || status === "received".toUpperCase()) {
-        // Increase product stock per received quantities
-        if (Array.isArray(items)) {
-            for (const it of items) {
-                const product = await Product.findById(it.product);
-                if (!product) continue;
-                const variant = product.variants.find(v => v.sku === it.variantSku);
-                if (!variant) continue;
-                variant.stockQuantity += Math.max(0, it.quantityReceived || 0);
-                await product.save();
-            }
-        } else {
-            // fallback to PO's own items
-            for (const it of po.items) {
-                const product = await Product.findById(it.product);
-                if (!product) continue;
-                const variant = product.variants.find(v => v.sku === it.variantSku);
-                if (!variant) continue;
-                variant.stockQuantity += Math.max(0, it.quantityReceived || 0);
-                await product.save();
-            }
-        }
-        po.status = "received";
-        po.receivedDate = new Date();
-        await po.save();
-        return NextResponse.json(po);
+    // Determine receipt lines: provided items or receive remaining for all lines
+    const lines = Array.isArray(items)
+        ? items
+        : po.items.map(i => ({ product: String(i.product), variantSku: i.variantSku, quantityReceived: (i.quantityOrdered - i.quantityReceived) }));
+
+    let anyReceived = false;
+    const grnItems: Array<{ product: string; variantSku: string; quantityReceived: number; unitCost?: number }> = [];
+    for (const it of lines) {
+        if (!it || !it.product || !it.variantSku) continue;
+        const poLine = po.items.find(li => String(li.product) === String(it.product) && li.variantSku === it.variantSku);
+        if (!poLine) continue;
+        const remaining = Math.max(0, poLine.quantityOrdered - poLine.quantityReceived);
+        const requested = Math.max(0, it.quantityReceived || 0);
+        const qty = Math.min(remaining, requested);
+        if (qty <= 0) continue;
+        const unitCost = poLine.unitCost ?? 0;
+        await postReceipt({ businessId, productId: String(it.product), variantSku: it.variantSku, quantity: qty, unitCost });
+        poLine.quantityReceived += qty;
+        anyReceived = true;
+        grnItems.push({ product: String(it.product), variantSku: it.variantSku, quantityReceived: qty, unitCost });
     }
 
-    return NextResponse.json({ error: "Unsupported operation" }, { status: 400 });
+    if (!anyReceived) {
+        return NextResponse.json({ error: "No receivable quantities provided" }, { status: 400 });
+    }
+
+    const allReceived = po.items.every(li => li.quantityReceived >= li.quantityOrdered);
+    if (allReceived) {
+        po.status = "received";
+        po.receivedDate = new Date();
+    } else {
+        po.status = "partially_received";
+    }
+    await po.save();
+
+    // Persist optional GRN for audit
+    try {
+        await GoodsReceipt.create({ business: businessId, purchaseOrder: po._id, items: grnItems, receivedAt: new Date() });
+    } catch {
+        // non-fatal
+    }
+    return NextResponse.json(po);
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
