@@ -1,49 +1,20 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-
-// Dynamically import Recharts for client-only rendering
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((m) => m.ResponsiveContainer),
-  { ssr: false }
-);
-const LineChart = dynamic(() => import("recharts").then((m) => m.LineChart), {
-  ssr: false,
-});
-const Line = dynamic(() => import("recharts").then((m) => m.Line), {
-  ssr: false,
-});
-const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), {
-  ssr: false,
-});
-const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), {
-  ssr: false,
-});
-const CartesianGrid = dynamic(
-  () => import("recharts").then((m) => m.CartesianGrid),
-  { ssr: false }
-);
-const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), {
-  ssr: false,
-});
-const Legend = dynamic(() => import("recharts").then((m) => m.Legend), {
-  ssr: false,
-});
-const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), {
-  ssr: false,
-});
-const Bar = dynamic(() => import("recharts").then((m) => m.Bar), {
-  ssr: false,
-});
-const PieChart = dynamic(() => import("recharts").then((m) => m.PieChart), {
-  ssr: false,
-});
-const Pie = dynamic(() => import("recharts").then((m) => m.Pie), {
-  ssr: false,
-});
-const Cell = dynamic(() => import("recharts").then((m) => m.Cell), {
-  ssr: false,
-});
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
 
 type Variant = {
   sku: string;
@@ -67,23 +38,35 @@ type Sale = {
   total: number;
 };
 type Expense = { _id: string; date: string; category: string; amount: number };
+type ProfitData = {
+  from: string;
+  to: string;
+  revenue: number;
+  cogs: number;
+  grossProfit: number;
+  expenses: number;
+  netProfit: number;
+};
 
 export default function DashboardClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [profitData, setProfitData] = useState<ProfitData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [prodRes, saleRes, expRes] = await Promise.all([
+      const [prodRes, saleRes, expRes, profitRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/sales"),
         fetch("/api/expenses"),
+        fetch("/api/reports/profit"),
       ]);
       setProducts(await prodRes.json());
       setSales(await saleRes.json());
       setExpenses(await expRes.json());
+      setProfitData(await profitRes.json());
       setLoading(false);
     })();
   }, []);
@@ -98,45 +81,14 @@ export default function DashboardClient() {
     [products]
   );
 
+  // Use accurate profit data from reports API
+  const revenue = profitData?.revenue || 0;
+  const cogs = profitData?.cogs || 0;
+  const grossProfit = profitData?.grossProfit || 0;
+  const expenseTotal = profitData?.expenses || 0;
+  const netProfit = profitData?.netProfit || 0;
+
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const monthEnd = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-    999
-  ).getTime();
-
-  const monthSalesTotal = useMemo(
-    () =>
-      sales
-        .filter(
-          (s) =>
-            new Date(s.createdAt).getTime() >= monthStart &&
-            new Date(s.createdAt).getTime() <= monthEnd
-        )
-        .reduce((sum, s) => sum + (s.total || 0), 0),
-    [sales, monthStart, monthEnd]
-  );
-
-  const monthExpensesTotal = useMemo(
-    () =>
-      expenses
-        .filter((e) => {
-          const t = new Date(e.date).getTime();
-          return t >= monthStart && t <= monthEnd;
-        })
-        .reduce((sum, e) => sum + (e.amount || 0), 0),
-    [expenses, monthStart, monthEnd]
-  );
-
-  const profit = useMemo(
-    () => monthSalesTotal - monthExpensesTotal,
-    [monthSalesTotal, monthExpensesTotal]
-  );
 
   // Sales trend (daily totals for this month)
   const salesTrend = useMemo(() => {
@@ -185,17 +137,14 @@ export default function DashboardClient() {
       .slice(0, 5);
   }, [sales, products]);
 
-  // Expense categories (this month)
+  // Expense categories (this month) - using local expenses data for detailed breakdown
   const expenseCategories = useMemo(() => {
     const byCat: Record<string, number> = {};
     expenses.forEach((e) => {
-      const t = new Date(e.date).getTime();
-      if (t >= monthStart && t <= monthEnd) {
-        byCat[e.category] = (byCat[e.category] || 0) + (e.amount || 0);
-      }
+      byCat[e.category] = (byCat[e.category] || 0) + (e.amount || 0);
     });
     return Object.entries(byCat).map(([name, value]) => ({ name, value }));
-  }, [expenses, monthStart, monthEnd]);
+  }, [expenses]);
 
   // Low stock variants
   const lowStockVariants = useMemo(() => {
@@ -234,14 +183,14 @@ export default function DashboardClient() {
           value={loading ? "-" : totalStock.toString()}
         />
         <KpiCard
-          title="Sales This Month"
-          value={loading ? "-" : monthSalesTotal.toFixed(2)}
+          title="Revenue This Month"
+          value={loading ? "-" : revenue.toFixed(2)}
         />
         <KpiCard
           title="Expenses This Month"
-          value={loading ? "-" : monthExpensesTotal.toFixed(2)}
+          value={loading ? "-" : expenseTotal.toFixed(2)}
         />
-        <KpiCard title="Profit" value={loading ? "-" : profit.toFixed(2)} />
+        <KpiCard title="Net Profit" value={loading ? "-" : netProfit.toFixed(2)} />
       </div>
 
       {/* Charts */}

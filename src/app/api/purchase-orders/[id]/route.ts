@@ -4,6 +4,8 @@ import PurchaseOrder from "@/lib/models/purchaseOrder";
 import { postReceipt } from "@/lib/services/inventory";
 import GoodsReceipt from "@/lib/models/goodsReceipt";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
+import { auth } from "@/auth";
+import { logActivity } from "@/lib/audit/logger";
 
 type Params = { params: { id: string } };
 
@@ -17,7 +19,7 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
     await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
+    const { businessId } = await requireBusinessAccess("write", "purchasing");
     const body = await request.json();
     const updated = await PurchaseOrder.findOneAndUpdate({ _id: params.id, business: businessId }, body, { new: true });
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -27,7 +29,7 @@ export async function PATCH(request: Request, { params }: Params) {
 // Mark received and increase stock
 export async function PUT(request: Request, { params }: Params) {
     await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
+    const { businessId } = await requireBusinessAccess("write", "purchasing");
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null) {
         return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -72,6 +74,11 @@ export async function PUT(request: Request, { params }: Params) {
     }
     await po.save();
 
+    const sessionUser = await auth();
+    if (sessionUser?.user?.id) {
+        await logActivity({ businessId, userId: sessionUser.user.id, entity: "PurchaseOrder", entityId: String(po._id), action: "receive", after: po });
+    }
+
     // Persist optional GRN for audit
     try {
         await GoodsReceipt.create({ business: businessId, purchaseOrder: po._id, items: grnItems, receivedAt: new Date() });
@@ -83,7 +90,7 @@ export async function PUT(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
     await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
+    const { businessId } = await requireBusinessAccess("write", "purchasing");
     const deleted = await PurchaseOrder.findOneAndDelete({ _id: params.id, business: businessId });
     if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });

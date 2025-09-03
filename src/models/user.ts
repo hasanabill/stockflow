@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-type UserRole =  "admin" | "moderator";
+type UserRole =  "ADMIN" | "MODERATOR";
 
 interface User extends Document {
     name: string;
@@ -16,7 +16,7 @@ const UserSchema: Schema<User> = new mongoose.Schema({
     name: { type: String, required: true }, 
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, default: "admin", enum: ["admin", "moderator"] },
+    role: { type: String, default: "ADMIN", enum: ["ADMIN", "MODERATOR"] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 }, {

@@ -21,7 +21,7 @@ export async function requireBusiness() {
     return String(found._id);
 }
 
-export async function requireBusinessAccess(mode: "read" | "write") {
+export async function requireBusinessAccess(mode: "read" | "write", resource?: string) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Unauthorized");
     const cookieStore = await nextCookies();
@@ -30,17 +30,50 @@ export async function requireBusinessAccess(mode: "read" | "write") {
     await connectToDB();
     const biz = await Business.findById(businessId).select({ owner: 1, members: 1 });
     if (!biz) throw new Error("Forbidden");
-    let role: "admin" | "staff" | "viewer" = "viewer";
-    if (session.user && String(biz.owner) === String(session.user.id)) role = "admin";
+    let role: "ADMIN" | "MODERATOR" | "STAFF" = "STAFF";
+    if (session.user && String(biz.owner) === String(session.user.id)) role = "ADMIN";
     else {
-        const foundMember = (biz.members as Array<{ user: unknown; role: "admin" | "staff" | "viewer" }>).find((m) => String(m.user) === String(session.user?.id));
-        role = foundMember?.role || "viewer";
+        const foundMember = (biz.members as Array<{ user: unknown; role: "ADMIN" | "MODERATOR" | "STAFF" }>).find((m) => String(m.user) === String(session.user?.id));
+        role = foundMember?.role || "STAFF";
     }
-    if (mode === "write" && role === "viewer") {
-        const err = new Error("Forbidden");
-        throw err;
+
+    // Check permissions based on role and resource
+    if (role === "STAFF" && mode === "write") {
+        const staffAllowedResources = [
+            "sales", "invoices", "payments", "stock"
+        ];
+        if (!resource || !staffAllowedResources.some(r => resource.startsWith(r))) {
+            throw new Error("Forbidden: Staff cannot perform write operations on this resource");
+        }
     }
+
     return { businessId: String(businessId), role };
+}
+
+// Helper function for specific permission checks
+export function hasPermission(role: "ADMIN" | "MODERATOR" | "STAFF", mode: "read" | "write", resource: string): boolean {
+    // ADMIN can do everything
+    if (role === "ADMIN") return true;
+
+    // MODERATOR can do most things except user management
+    if (role === "MODERATOR") {
+        if (resource.startsWith("users") || resource.startsWith("memberships")) return false;
+        return true;
+    }
+
+    // STAFF restrictions
+    if (role === "STAFF") {
+        if (mode === "write") {
+            const staffAllowedResources = [
+                "sales", "invoices", "payments", "stock"
+            ];
+            return staffAllowedResources.some(r => resource.startsWith(r));
+        }
+        // STAFF can read most things except sensitive data
+        return !resource.startsWith("users") && !resource.startsWith("memberships");
+    }
+
+    return false;
 }
 
 

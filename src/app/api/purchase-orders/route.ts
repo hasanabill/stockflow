@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import PurchaseOrder from "@/lib/models/purchaseOrder";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
+import { PurchaseOrderCreateSchema } from "@/lib/validation/schemas";
+import { validateRequestBody, handleValidationError } from "@/lib/validation/helpers";
 
 export async function GET() {
     await connectToDB();
@@ -11,20 +13,39 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
-    const body: unknown = await request.json();
-    if (typeof body !== "object" || body === null) {
-        return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    try {
+        await connectToDB();
+        const { businessId } = await requireBusinessAccess("write", "purchasing");
+
+        // Validate request body with Zod
+        const validatedData = await validateRequestBody(PurchaseOrderCreateSchema, request);
+        const { reference, supplier, expectedDeliveryDate, items, notes } = validatedData;
+
+        const subtotal = items.reduce((s, it) => s + (it.quantityOrdered * it.unitCost), 0);
+        const tax = 0; // Default tax for now
+        const total = subtotal + tax;
+
+        const po = await PurchaseOrder.create({
+            reference,
+            supplier,
+            expectedDeliveryDate,
+            items: items.map(i => ({
+                ...i,
+                quantityReceived: 0,
+                lineTotal: i.quantityOrdered * i.unitCost
+            })),
+            subtotal,
+            tax,
+            total,
+            status: "ordered",
+            notes,
+            business: businessId
+        });
+
+        return NextResponse.json(po, { status: 201 });
+    } catch (error) {
+        return handleValidationError(error);
     }
-    const { reference, supplier, expectedDate, items, tax = 0, notes } = body as any;
-    if (!reference || !supplier || !Array.isArray(items) || items.length === 0) {
-        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-    const subtotal = items.reduce((s: number, it: any) => s + (it.quantityOrdered * it.unitCost), 0);
-    const total = subtotal + Number(tax || 0);
-    const po = await PurchaseOrder.create({ reference, supplier, expectedDate, items: items.map((i: any) => ({ ...i, quantityReceived: i.quantityReceived || 0, lineTotal: i.quantityOrdered * i.unitCost })), subtotal, tax, total, status: "ordered", notes, business: businessId });
-    return NextResponse.json(po, { status: 201 });
 }
 
 

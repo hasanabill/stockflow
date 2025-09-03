@@ -12,6 +12,7 @@ type Product = {
   _id: string;
   name: string;
   category?: string;
+  attributes?: Record<string, any>;
   variants: Variant[];
 };
 
@@ -109,6 +110,7 @@ function CreateProductModal({
   const [variants, setVariants] = useState<Variant[]>([
     { sku: "", size: "", color: "", stockQuantity: 0 },
   ] as Variant[]);
+  const [attributes, setAttributes] = useState<Record<string, any>>({});
   const canSubmit = useMemo(
     () =>
       name.trim().length > 0 && variants.every((v) => v.sku.trim().length > 0),
@@ -135,7 +137,7 @@ function CreateProductModal({
     const res = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, category, variants }),
+      body: JSON.stringify({ name, category, variants, attributes }),
     });
     if (!res.ok) return;
     const created = await res.json();
@@ -171,6 +173,24 @@ function CreateProductModal({
                 placeholder="Tops"
               />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-600">Attributes (JSON)</label>
+            <textarea
+              value={JSON.stringify(attributes)}
+              onChange={(e) => {
+                try {
+                  const v = JSON.parse(e.target.value || "{}");
+                  setAttributes(v);
+                } catch {
+                  // ignore
+                }
+              }}
+              className="w-full px-3 py-2 rounded border font-mono text-xs"
+              rows={4}
+              placeholder='{"size":"M","color":"Black"}'
+            />
           </div>
 
           <div className="space-y-2">

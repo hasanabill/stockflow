@@ -16,6 +16,7 @@ export interface Product extends Document {
     description?: string;
     costPrice?: number;
     salePrice?: number;
+    attributes?: Record<string, any>;
     variants: ProductVariant[];
     defaultSupplier?: mongoose.Types.ObjectId | null;
     business: Schema.Types.ObjectId;
@@ -39,6 +40,7 @@ const ProductSchema = new Schema<Product>({
     description: { type: String },
     costPrice: { type: Number, min: 0 },
     salePrice: { type: Number, min: 0 },
+    attributes: { type: Schema.Types.Mixed },
     variants: { type: [VariantSchema], default: [] },
     defaultSupplier: { type: Schema.Types.ObjectId, ref: "Supplier", default: null },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },

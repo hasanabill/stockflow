@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import Supplier from "@/lib/models/supplier";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
+import { SupplierCreateSchema } from "@/lib/validation/schemas";
+import { validateRequestBody, handleValidationError } from "@/lib/validation/helpers";
 
 export async function GET() {
     await connectToDB();
@@ -11,22 +13,27 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
-    const body: unknown = await request.json();
-    if (typeof body !== "object" || body === null) {
-        return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
-    const { name, email, phone, address, notes, isActive } = body as Record<string, unknown>;
-    if (!name || typeof name !== "string") {
-        return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
     try {
-        const created = await Supplier.create({ name, email, phone, address, notes, isActive, business: businessId });
+        await connectToDB();
+        const { businessId } = await requireBusinessAccess("write", "suppliers");
+
+        // Validate request body with Zod
+        const validatedData = await validateRequestBody(SupplierCreateSchema, request);
+        const { name, contactPerson, email, phone, address, notes } = validatedData;
+
+        const created = await Supplier.create({
+            name,
+            contactPerson,
+            email,
+            phone,
+            address,
+            notes,
+            business: businessId
+        });
+
         return NextResponse.json(created, { status: 201 });
-    } catch (e) {
-        const message = e instanceof Error ? e.message : "Unknown error";
-        return NextResponse.json({ error: message }, { status: 400 });
+    } catch (error) {
+        return handleValidationError(error);
     }
 }
 

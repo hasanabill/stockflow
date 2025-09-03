@@ -15,7 +15,7 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
     await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
+    const { businessId } = await requireBusinessAccess("write", "suppliers");
     const payload = await request.json();
     const supplier = await Supplier.findOneAndUpdate({ _id: params.id, business: businessId }, payload, { new: true });
     if (!supplier) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
     await connectToDB();
-    const { businessId } = await requireBusinessAccess("write");
+    const { businessId } = await requireBusinessAccess("write", "suppliers");
     const deleted = await Supplier.findOneAndDelete({ _id: params.id, business: businessId });
     if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });

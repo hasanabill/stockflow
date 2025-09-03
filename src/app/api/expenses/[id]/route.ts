@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDB from "@/lib/mongodb";
 import Expense from "@/lib/models/expense";
-import { requireBusiness } from "@/lib/business";
+import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 
 type Params = { params: { id: string } };
 
@@ -15,7 +15,7 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
     await connectToDB();
-    const businessId = await requireBusiness();
+    const { businessId } = await requireBusinessAccess("write", "expenses");
     const payload = await request.json();
     const expense = await Expense.findOneAndUpdate({ _id: params.id, business: businessId }, payload, { new: true });
     if (!expense) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
     await connectToDB();
-    const businessId = await requireBusiness();
+    const { businessId } = await requireBusinessAccess("write", "expenses");
     const deleted = await Expense.findOneAndDelete({ _id: params.id, business: businessId });
     if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });

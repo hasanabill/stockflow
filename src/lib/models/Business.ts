@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-export type BusinessRole = "admin" | "staff" | "viewer";
+export type BusinessRole = "ADMIN" | "MODERATOR" | "STAFF";
 
 export interface BusinessMember {
     user: Schema.Types.ObjectId;
@@ -18,7 +18,7 @@ export interface Business extends Document {
 
 const MemberSchema = new Schema<BusinessMember>({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    role: { type: String, enum: ["admin", "staff", "viewer"], required: true },
+    role: { type: String, enum: ["ADMIN", "MODERATOR", "STAFF"], required: true },
 }, { _id: false });
 
 const BusinessSchema = new Schema<Business>({
