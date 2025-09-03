@@ -16,6 +16,7 @@ type PostSaleArgs = {
     productId: string;
     variantSku?: string;
     quantity: number;
+    sourceId?: string;
 };
 
 export async function postReceipt({ businessId, productId, variantSku, quantity, unitCost }: PostReceiptArgs) {
@@ -56,7 +57,7 @@ export async function postReceipt({ businessId, productId, variantSku, quantity,
     }
 }
 
-export async function postSale({ businessId, productId, variantSku, quantity }: PostSaleArgs) {
+export async function postSale({ businessId, productId, variantSku, quantity, sourceId }: PostSaleArgs) {
     if (quantity <= 0) throw new Error("Invalid sale args");
     await connectToDB();
     const session = await mongoose.startSession();
@@ -79,7 +80,7 @@ export async function postSale({ businessId, productId, variantSku, quantity }: 
                     variantSku: variantSku,
                     delta: -quantity,
                     sourceType: "SALE",
-                    sourceId: null,
+                    sourceId: sourceId ?? null,
                     averageCostAtPosting,
                 }
             ], { session });
