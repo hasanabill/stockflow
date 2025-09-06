@@ -229,27 +229,6 @@ tasks:
       - src/app/dashboard/stock/page.tsx
     acceptance:
       - Search by SKU/name; low-stock view available.
-  - id: T10.1
-    name: Unit tests (counters, costing, guards, permissions)
-    depends_on: [T1.2, T4.1]
-    files:
-      - tests/unit/**
-    acceptance:
-      - All unit tests pass locally.
-  - id: T10.2
-    name: Integration tests (PO receive, sale confirm/cancel)
-    depends_on: [T2.1, T3.2]
-    files:
-      - tests/integration/**
-    acceptance:
-      - Key integration scenarios are green.
-  - id: T10.3
-    name: E2E smoke (sale→invoice→deliver→profit)
-    depends_on: [T4.3, T5.1]
-    files:
-      - tests/e2e/**
-    acceptance:
-      - E2E path passes in CI.
   - id: T11.1
     name: Configure env and deploy
     depends_on: []
@@ -553,16 +532,6 @@ tasks:
 - [ ] Enhance stock page with SKU/name search and attribute filters; low-stock view.
   - Files: `src/app/dashboard/stock/page.tsx`.
 
-### 10) Testing
-
-- [ ] Unit tests
-  - Counters increment atomically; moving average correctness; stock guards; role permissions.
-- [ ] Integration tests
-  - PO receive updates snapshot+ledger; sale confirm reduces stock and records COGS; cancel restores stock.
-- [ ] E2E smoke
-  - Create sale → confirm → invoice → deliver → profit reflects.
-  - Files: `tests/**` (set up Jest/Vitest + Playwright as preferred).
-
 ### 11) Deployment and configuration
 
 - [ ] Ensure env vars: `MONGODB_URI`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (and optional `SENTRY_DSN`).
@@ -676,7 +645,7 @@ tasks:
 11. Observability and monitoring (1–2 days)
 12. Development tools and seeding (1–2 days)
 13. UX improvements and code quality (ongoing)
-14. Validation/tests/polish (ongoing)
+14. Validation/polish (ongoing)
 
 ## Key Missing Items Identified
 
@@ -699,7 +668,6 @@ tasks:
 1. **Data Seeding**: No script to create sample data
 2. **Environment Validation**: No startup validation of required env vars
 3. **Code Quality**: TypeScript not in strict mode, basic ESLint rules
-4. **Testing**: No test setup or structure
 
 ### UI/UX Gaps
 1. **Customer Pages**: No customer management UI
