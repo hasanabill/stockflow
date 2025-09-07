@@ -29,10 +29,8 @@ export async function POST(request: Request) {
     await connectToDB();
     const { name, description } = await request.json();
     if (!name || typeof name !== "string") return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    const created = await Business.create({ name, description, owner: session.user.id, members: [{ user: session.user.id, role: "admin" }] });
+    const created = await Business.create({ name, description, owner: session.user.id, members: [{ user: session.user.id, role: "ADMIN" }] });
     const res = NextResponse.json(created, { status: 201 });
     res.cookies.set("businessId", String(created._id), { path: "/", httpOnly: false });
     return res;
 }
-
-

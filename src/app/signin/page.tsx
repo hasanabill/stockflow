@@ -11,7 +11,7 @@ export default function SignInPage() {
     const email = String(formData.get("email") || "");
     const password = String(formData.get("password") || "");
     try {
-      await signIn("credentials", { email, password, redirectTo: "/dashboard" });
+      await signIn("credentials", { email, password, redirectTo: "/businesses" });
       return {};
     } catch (error) {
       if (error instanceof AuthError) {

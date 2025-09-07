@@ -23,7 +23,7 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/dashboard/:path*", "/api/:path*", "/"],
+    matcher: ["/businesses", "/dashboard/:path*", "/api/:path*", "/"],
 };
 
 
