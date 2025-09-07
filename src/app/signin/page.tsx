@@ -31,7 +31,7 @@ export default function SignInPage() {
         <h1 className="text-2xl font-semibold mb-6">Sign in</h1>
         <SignInForm action={authenticate} />
         <p className="text-sm mt-4">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link className="underline" href="/signup">
             Sign up
           </Link>

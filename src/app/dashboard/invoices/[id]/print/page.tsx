@@ -4,9 +4,7 @@ import Invoice from "@/lib/models/invoice";
 import Sale from "@/lib/models/sale";
 import Business from "@/lib/models/Business";
 
-type Params = { params: { id: string } };
-
-export default async function InvoicePrintPage({ params }: Params) {
+export default async function InvoicePrintPage({ params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const invoice = await Invoice.findOne({ _id: params.id, business: businessId }).lean();

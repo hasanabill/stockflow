@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/signin", "/signup", "/api/auth", "/_next", "/favicon.ico", "/public"];
 
-export default auth((request) => {
+export default function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
         return NextResponse.next();
     }
 
-    if (!request.auth) {
+    const hasSession = Boolean(
+        request.cookies.get("authjs.session-token")?.value ||
+        request.cookies.get("__Secure-authjs.session-token")?.value
+    );
+
+    if (!hasSession) {
         const signInUrl = new URL("/signin", request.url);
         signInUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(signInUrl);
     }
     return NextResponse.next();
-});
+}
 
 export const config = {
     matcher: ["/dashboard/:path*", "/api/:path*", "/"],

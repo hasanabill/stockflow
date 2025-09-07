@@ -7,9 +7,7 @@ import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 import { auth } from "@/auth";
 import { logActivity } from "@/lib/audit/logger";
 
-type Params = { params: { id: string } };
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, { params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const po = await PurchaseOrder.findOne({ _id: params.id, business: businessId });
@@ -17,7 +15,7 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json(po);
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "purchasing");
     const body = await request.json();
@@ -27,7 +25,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 // Mark received and increase stock
-export async function PUT(request: Request, { params }: Params) {
+export async function PUT(request: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "purchasing");
     const body: unknown = await request.json();
@@ -88,7 +86,7 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json(po);
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(_req: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "purchasing");
     const deleted = await PurchaseOrder.findOneAndDelete({ _id: params.id, business: businessId });

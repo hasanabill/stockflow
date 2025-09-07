@@ -3,9 +3,7 @@ import connectToDB from "@/lib/mongodb";
 import Expense from "@/lib/models/expense";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 
-type Params = { params: { id: string } };
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, { params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const expense = await Expense.findOne({ _id: params.id, business: businessId });
@@ -13,7 +11,7 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json(expense);
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "expenses");
     const payload = await request.json();
@@ -22,7 +20,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json(expense);
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(_req: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "expenses");
     const deleted = await Expense.findOneAndDelete({ _id: params.id, business: businessId });

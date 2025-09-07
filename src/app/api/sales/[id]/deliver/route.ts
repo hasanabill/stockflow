@@ -5,9 +5,7 @@ import { requireBusinessAccess } from "@/lib/business";
 import { auth } from "@/auth";
 import { logActivity } from "@/lib/audit/logger";
 
-type Params = { params: { id: string } };
-
-export async function POST(_req: Request, { params }: Params) {
+export async function POST(_req: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "sales");
     const sale = await Sale.findOne({ _id: params.id, business: businessId });

@@ -7,9 +7,7 @@ import Invoice from "@/lib/models/invoice";
 import type { Invoice as InvoiceDoc } from "@/lib/models/invoice";
 import { getNextSequence } from "@/lib/utils/counters";
 
-type Params = { params: { saleId: string } };
-
-export async function POST(_req: Request, { params }: Params) {
+export async function POST(_req: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write");
     const sale = await Sale.findOne({ _id: params.saleId, business: businessId });

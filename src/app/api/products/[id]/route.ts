@@ -3,9 +3,7 @@ import connectToDB from "@/lib/mongodb";
 import Product from "@/lib/models/product";
 import { requireBusiness } from "@/lib/business";
 
-type Params = { params: { id: string } };
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, { params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const product = await Product.findOne({ _id: params.id, business: businessId });
@@ -13,7 +11,7 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json(product);
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const payload = await request.json();
@@ -22,7 +20,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json(product);
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(_req: Request, { params }: any) {
     await connectToDB();
     const businessId = await requireBusiness();
     const deleted = await Product.findOneAndDelete({ _id: params.id, business: businessId });
