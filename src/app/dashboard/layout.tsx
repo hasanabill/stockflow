@@ -39,6 +39,9 @@ export default async function DashboardLayout({
               <Link href="/dashboard/products" className="hover:underline">
                 Products
               </Link>
+              <Link href="/dashboard/customers" className="hover:underline">
+                Customers
+              </Link>
               <Link href="/dashboard/expenses" className="hover:underline">
                 Expenses
               </Link>

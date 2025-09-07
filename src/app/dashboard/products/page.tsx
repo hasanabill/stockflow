@@ -175,23 +175,7 @@ function CreateProductModal({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-gray-600">Attributes (JSON)</label>
-            <textarea
-              value={JSON.stringify(attributes)}
-              onChange={(e) => {
-                try {
-                  const v = JSON.parse(e.target.value || "{}");
-                  setAttributes(v);
-                } catch {
-                  // ignore
-                }
-              }}
-              className="w-full px-3 py-2 rounded border font-mono text-xs"
-              rows={4}
-              placeholder='{"size":"M","color":"Black"}'
-            />
-          </div>
+          {/* Attributes input removed for now per request */}
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">

@@ -3,8 +3,8 @@ import { z } from "zod";
 // Product schemas
 export const ProductCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  salePrice: z.number().positive(),
-  costPrice: z.number().positive(),
+  salePrice: z.number().positive().optional(),
+  costPrice: z.number().positive().optional(),
   category: z.string().optional(),
   brand: z.string().optional(),
   description: z.string().optional(),
@@ -12,9 +12,11 @@ export const ProductCreateSchema = z.object({
   attributes: z.record(z.string(), z.any()).optional(),
   variants: z.array(z.object({
     sku: z.string().min(1, "SKU is required"),
-    name: z.string().min(1, "Variant name is required"),
+    size: z.string().optional(),
+    color: z.string().optional(),
     stockQuantity: z.number().int().min(0, "Stock quantity must be non-negative"),
-    attributes: z.record(z.string(), z.any()).optional(),
+    reorderLevel: z.number().int().min(0).optional(),
+    barcode: z.string().optional(),
   })).min(1, "At least one variant is required"),
 });
 
