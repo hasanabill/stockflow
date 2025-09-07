@@ -7,6 +7,8 @@ export interface Supplier extends Document {
     address?: string;
     notes?: string;
     isActive: boolean;
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -19,6 +21,8 @@ const SupplierSchema = new Schema<Supplier>({
     address: { type: String },
     notes: { type: String },
     isActive: { type: Boolean, default: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 

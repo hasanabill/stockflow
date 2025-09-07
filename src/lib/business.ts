@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { cookies as nextCookies } from "next/headers";
 import connectToDB from "@/lib/mongodb";
 import Business from "@/lib/models/Business";
+import User from "@/models/user";
 
 export async function requireBusiness() {
     const session = await auth();
@@ -10,13 +11,17 @@ export async function requireBusiness() {
     const businessId = cookieStore.get("businessId")?.value;
     if (!businessId) throw new Error("No business selected");
     await connectToDB();
-    const found = await Business.findOne({
-        _id: businessId,
-        $or: [
-            { owner: session.user.id },
-            { "members.user": session.user.id },
-        ]
-    }).select({ _id: 1 });
+    // Allow global admin to access any business
+    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 });
+    const found = me?.isGlobalAdmin
+        ? await Business.findById(businessId).select({ _id: 1 })
+        : await Business.findOne({
+            _id: businessId,
+            $or: [
+                { owner: session.user.id },
+                { "members.user": session.user.id },
+            ]
+        }).select({ _id: 1 });
     if (!found) throw new Error("Forbidden");
     return String(found._id);
 }
@@ -28,8 +33,12 @@ export async function requireBusinessAccess(mode: "read" | "write", resource?: s
     const businessId = cookieStore.get("businessId")?.value;
     if (!businessId) throw new Error("No business selected");
     await connectToDB();
+    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 });
     const biz = await Business.findById(businessId).select({ owner: 1, members: 1 });
     if (!biz) throw new Error("Forbidden");
+    if (me?.isGlobalAdmin) {
+        return { businessId: String(businessId), role: "ADMIN" };
+    }
     let role: "ADMIN" | "MODERATOR" | "STAFF" = "STAFF";
     if (session.user && String(biz.owner) === String(session.user.id)) role = "ADMIN";
     else {

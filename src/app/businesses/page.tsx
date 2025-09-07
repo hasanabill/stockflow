@@ -22,6 +22,8 @@ export default async function BusinessesPage() {
   const plain = (businesses || []).map((b: any) => ({
     _id: String(b._id),
     name: b.name as string,
+    slug: b.slug as string,
+    status: (b.status as string) || "active",
     description: (b.description as string) || "",
   }));
 

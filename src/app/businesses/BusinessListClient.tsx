@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-type Biz = { _id: string; name: string; description?: string };
+type Biz = { _id: string; name: string; slug: string; status: string; description?: string };
 
 export default function BusinessListClient({ businesses }: { businesses: Biz[] }) {
   const [creating, setCreating] = useState(false);
@@ -81,6 +81,7 @@ export default function BusinessListClient({ businesses }: { businesses: Biz[] }
             className="text-left rounded border p-4 hover:shadow transition"
           >
             <div className="text-lg font-medium">{b.name}</div>
+            <div className="text-xs text-gray-600 mt-0.5">/{b.slug} · {b.status}</div>
             {b.description && (
               <div className="text-sm text-gray-600 mt-1">{b.description}</div>
             )}

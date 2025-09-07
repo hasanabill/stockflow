@@ -8,6 +8,8 @@ export interface Expense extends Document {
     amount: number;
     description?: string;
     supplier?: mongoose.Types.ObjectId | null;
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     business: mongoose.Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -19,6 +21,8 @@ const ExpenseSchema = new Schema<Expense>({
     amount: { type: Number, required: true, min: 0 },
     description: { type: String },
     supplier: { type: Schema.Types.ObjectId, ref: "Supplier", default: null },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 

@@ -17,6 +17,8 @@ export interface Sale extends Document {
     total: number;
     notes?: string;
     status: "draft" | "confirmed" | "delivered" | "canceled";
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -39,6 +41,8 @@ const SaleSchema = new Schema<Sale>({
     total: { type: Number, required: true, min: 0 },
     notes: { type: String },
     status: { type: String, enum: ["draft", "confirmed", "delivered", "canceled"], default: "draft" },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 

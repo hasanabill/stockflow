@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-export type PurchaseOrderStatus = "draft" | "ordered" | "partially_received" | "received" | "cancelled";
+export type PurchaseOrderStatus = "draft" | "ordered" | "partially_received" | "received" | "canceled";
 
 export interface PurchaseOrderItem {
     product: mongoose.Types.ObjectId;
@@ -23,6 +23,8 @@ export interface PurchaseOrder extends Document {
     total: number;
     notes?: string;
     business: Schema.Types.ObjectId;
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -39,7 +41,7 @@ const PurchaseOrderItemSchema = new Schema<PurchaseOrderItem>({
 const PurchaseOrderSchema = new Schema<PurchaseOrder>({
     reference: { type: String, required: true, trim: true },
     supplier: { type: Schema.Types.ObjectId, ref: "Supplier", required: true },
-    status: { type: String, required: true, enum: ["draft", "ordered", "partially_received", "received", "cancelled"], default: "draft" },
+    status: { type: String, required: true, enum: ["draft", "ordered", "partially_received", "received", "canceled"], default: "draft" },
     expectedDate: { type: Date },
     receivedDate: { type: Date },
     items: { type: [PurchaseOrderItemSchema], required: true },
@@ -48,6 +50,8 @@ const PurchaseOrderSchema = new Schema<PurchaseOrder>({
     total: { type: Number, required: true, min: 0 },
     notes: { type: String },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
 }, { timestamps: true });
 
 PurchaseOrderSchema.index({ business: 1, reference: 1 }, { unique: true });

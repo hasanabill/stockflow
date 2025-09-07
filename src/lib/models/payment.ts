@@ -9,6 +9,8 @@ export interface Payment extends Document {
     method: PaymentMethod;
     paidAt: Date;
     notes?: string;
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -20,6 +22,8 @@ const PaymentSchema = new Schema<Payment>({
     method: { type: String, required: true, enum: ["cash", "bank", "other"] },
     paidAt: { type: Date, required: true },
     notes: { type: String },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
 }, { timestamps: true });
 
 PaymentSchema.index({ business: 1, invoice: 1, paidAt: -1 });

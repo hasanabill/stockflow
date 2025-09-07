@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import connectToDB from "@/lib/mongodb";
 import Business from "@/lib/models/Business";
+import User from "@/models/user";
 
 export async function POST(request: Request) {
     const session = await auth();
@@ -11,7 +12,10 @@ export async function POST(request: Request) {
     const { businessId } = await request.json();
     if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
     await connectToDB();
-    const found = await Business.findOne({ _id: businessId, $or: [{ owner: session.user.id }, { "members.user": session.user.id }] });
+    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 });
+    const found = me?.isGlobalAdmin
+        ? await Business.findById(businessId)
+        : await Business.findOne({ _id: businessId, $or: [{ owner: session.user.id }, { "members.user": session.user.id }] });
     if (!found) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const res = NextResponse.json({ ok: true });
     res.cookies.set("businessId", String(businessId), { path: "/", httpOnly: false });

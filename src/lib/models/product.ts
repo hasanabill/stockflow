@@ -19,6 +19,8 @@ export interface Product extends Document {
     attributes?: Record<string, any>;
     variants: ProductVariant[];
     defaultSupplier?: mongoose.Types.ObjectId | null;
+    createdBy?: Schema.Types.ObjectId | null;
+    updatedBy?: Schema.Types.ObjectId | null;
     business: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -43,6 +45,8 @@ const ProductSchema = new Schema<Product>({
     attributes: { type: Schema.Types.Mixed },
     variants: { type: [VariantSchema], default: [] },
     defaultSupplier: { type: Schema.Types.ObjectId, ref: "Supplier", default: null },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     business: { type: Schema.Types.ObjectId, ref: "Business", required: true },
 }, { timestamps: true });
 
