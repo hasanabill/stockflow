@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import connectToDB from "@/lib/mongodb";
 import { requireBusiness } from "@/lib/business";
 import Payment from "@/lib/models/payment";
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
         ? { $dateToString: { format: "%G-%V", date: "$paidAt" } }
         : { $dateToString: { format: "%Y-%m-%d", date: "$paidAt" } };
 
-    const match = { business: new (require("mongoose").Types.ObjectId)(businessId), paidAt: { $gte: fromDate, $lte: toDate } };
+    const match = { business: new Types.ObjectId(businessId), paidAt: { $gte: fromDate, $lte: toDate } };
 
     const groupId: any = { period: dateExpr };
     if (byMethod) groupId.method = "$method";

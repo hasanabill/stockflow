@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import connectToDB from "@/lib/mongodb";
 import { requireBusiness } from "@/lib/business";
 import Sale from "@/lib/models/sale";
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
         : { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
 
     const rows = await Sale.aggregate([
-        { $match: { business: new (require("mongoose").Types.ObjectId)(businessId), createdAt: { $gte: fromDate, $lte: toDate } } },
+        { $match: { business: new Types.ObjectId(businessId), createdAt: { $gte: fromDate, $lte: toDate } } },
         { $group: { _id: dateExpr, count: { $sum: 1 }, total: { $sum: "$total" } } },
         { $sort: { _id: 1 } },
     ]);
