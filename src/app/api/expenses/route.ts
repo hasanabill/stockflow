@@ -4,6 +4,7 @@ import Expense from "@/lib/models/expense";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 import { ExpenseCreateSchema } from "@/lib/validation/schemas";
 import { validateRequestBody, handleValidationError } from "@/lib/validation/helpers";
+import { auth } from "@/auth";
 
 export async function GET() {
     await connectToDB();
@@ -21,13 +22,15 @@ export async function POST(request: Request) {
         const validatedData = await validateRequestBody(ExpenseCreateSchema, request);
         const { description, amount, category, date, notes } = validatedData;
 
+        const session = await auth();
         const expense = await Expense.create({
             description,
             amount,
             category,
             date: date ? new Date(date) : new Date(),
             notes,
-            business: businessId
+            business: businessId,
+            createdBy: session?.user?.id || null,
         });
 
         return NextResponse.json(expense, { status: 201 });

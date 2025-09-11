@@ -3,6 +3,7 @@ import { cookies as nextCookies } from "next/headers";
 import connectToDB from "@/lib/mongodb";
 import Business from "@/lib/models/Business";
 import User from "@/models/user";
+import Membership from "@/lib/models/membership";
 
 export async function requireBusiness() {
     const session = await auth();
@@ -11,19 +12,14 @@ export async function requireBusiness() {
     const businessId = cookieStore.get("businessId")?.value;
     if (!businessId) throw new Error("No business selected");
     await connectToDB();
-    // Allow global admin to access any business
-    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 });
-    const found = me?.isGlobalAdmin
-        ? await Business.findById(businessId).select({ _id: 1 })
-        : await Business.findOne({
-            _id: businessId,
-            $or: [
-                { owner: session.user.id },
-                { "members.user": session.user.id },
-            ]
-        }).select({ _id: 1 });
-    if (!found) throw new Error("Forbidden");
-    return String(found._id);
+    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 }).lean();
+    const biz = await Business.findById(businessId).select({ _id: 1, owner: 1 }).lean();
+    if (!biz) throw new Error("Forbidden");
+    if (me?.isGlobalAdmin) return String(biz._id);
+    if (String(biz.owner) === String(session.user.id)) return String(biz._id);
+    const member = await Membership.findOne({ business: biz._id, user: session.user.id }).select({ _id: 1 }).lean();
+    if (!member) throw new Error("Forbidden");
+    return String(biz._id);
 }
 
 export async function requireBusinessAccess(mode: "read" | "write", resource?: string) {
@@ -33,18 +29,18 @@ export async function requireBusinessAccess(mode: "read" | "write", resource?: s
     const businessId = cookieStore.get("businessId")?.value;
     if (!businessId) throw new Error("No business selected");
     await connectToDB();
-    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 });
-    const biz = await Business.findById(businessId).select({ owner: 1, members: 1 });
+    const me = await User.findById(session.user.id).select({ isGlobalAdmin: 1 }).lean();
+    const biz = await Business.findById(businessId).select({ owner: 1 }).lean();
     if (!biz) throw new Error("Forbidden");
     if (me?.isGlobalAdmin) {
         return { businessId: String(businessId), role: "ADMIN" };
     }
-    let role: "ADMIN" | "MODERATOR" | "STAFF" = "STAFF";
-    if (session.user && String(biz.owner) === String(session.user.id)) role = "ADMIN";
-    else {
-        const foundMember = (biz.members as Array<{ user: unknown; role: "ADMIN" | "MODERATOR" | "STAFF" }>).find((m) => String(m.user) === String(session.user?.id));
-        role = foundMember?.role || "STAFF";
+    if (session.user && String(biz.owner) === String(session.user.id)) {
+        return { businessId: String(businessId), role: "ADMIN" };
     }
+    const membership = await Membership.findOne({ business: businessId, user: session.user.id }).select({ role: 1 }).lean();
+    if (!membership) throw new Error("Forbidden");
+    const role: "ADMIN" | "MODERATOR" | "STAFF" = membership.role as any;
 
     // Check permissions based on role and resource
     if (role === "STAFF" && mode === "write") {

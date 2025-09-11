@@ -53,7 +53,11 @@ export default function ProductsPage() {
             {loading ? (
               <tr>
                 <td className="p-3" colSpan={4}>
-                  Loading…
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-black/10 rounded"></div>
+                    <div className="h-4 bg-black/10 rounded"></div>
+                    <div className="h-4 bg-black/10 rounded"></div>
+                  </div>
                 </td>
               </tr>
             ) : products.length === 0 ? (

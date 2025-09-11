@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -28,6 +28,7 @@ export default function InvoicesPage() {
     const [pagination, setPagination] = useState<PaginationInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>("");
+    const [paying, setPaying] = useState<Invoice | null>(null);
     const router = useRouter();
 
     const fetchInvoices = async (status?: string, offset = 0) => {
@@ -136,7 +137,13 @@ export default function InvoicesPage() {
             {/* Invoices List */}
             <div className="rounded card p-0 overflow-hidden">
                 {loading && invoices.length === 0 ? (
-                    <div className="p-8 text-center text-muted">Loading invoices...</div>
+                    <div className="p-8">
+                        <div className="animate-pulse space-y-3">
+                            <div className="h-4 bg-black/10 rounded"></div>
+                            <div className="h-4 bg-black/10 rounded"></div>
+                            <div className="h-4 bg-black/10 rounded"></div>
+                        </div>
+                    </div>
                 ) : invoices.length === 0 ? (
                     <div className="p-8 text-center text-muted">
                         No invoices found. Create a sale and generate an invoice to get started.
@@ -182,14 +189,11 @@ export default function InvoicesPage() {
                                                 {invoice.status.replace("_", " ")}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-center">
-                                            <Link
-                                                href={`/dashboard/invoices/${invoice._id}/print`}
-                                                target="_blank"
-                                                className="btn btn-secondary text-sm"
-                                            >
-                                                Print
-                                            </Link>
+                                        <td className="p-4 text-center space-x-2">
+                                            <Link href={`/dashboard/invoices/${invoice._id}/print`} target="_blank" className="btn btn-secondary text-sm">Print</Link>
+                                            {invoice.balance > 0 && (
+                                                <button className="btn btn-primary text-sm" onClick={() => setPaying(invoice)}>Add Payment</button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -239,6 +243,59 @@ export default function InvoicesPage() {
                     </div>
                 </div>
             )}
+            {paying && (
+                <RecordPaymentModal invoice={paying} onClose={() => setPaying(null)} onSaved={() => { setPaying(null); fetchInvoices(statusFilter); }} />
+            )}
+        </div>
+    );
+}
+
+function RecordPaymentModal({ invoice, onClose, onSaved }: { invoice: Invoice; onClose: () => void; onSaved: () => void }) {
+    const [amount, setAmount] = useState<number>(0);
+    const [method, setMethod] = useState<string>("cash");
+    const [paidAt, setPaidAt] = useState<string>(() => new Date().toISOString().slice(0, 10));
+    const canSubmit = useMemo(() => amount > 0, [amount]);
+
+    async function submit(e: React.FormEvent) {
+        e.preventDefault();
+        const res = await fetch("/api/payments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ invoice: invoice._id, amount, method: method as any, paidAt }),
+        });
+        if (res.ok) onSaved();
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-md card rounded-lg shadow">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="font-medium text-black">Record payment for {invoice.invoiceNumber}</div>
+                    <button onClick={onClose} className="text-sm">✕</button>
+                </div>
+                <form onSubmit={submit} className="p-4 space-y-3">
+                    <div>
+                        <label className="text-xs text-gray-600">Amount</label>
+                        <input type="number" min={0.01} step="0.01" className="w-full px-3 py-2 rounded border" value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)} placeholder="0.00" />
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-600">Method</label>
+                        <select className="w-full px-3 py-2 rounded border bg-white text-black" value={method} onChange={(e) => setMethod(e.target.value)}>
+                            <option value="cash">Cash</option>
+                            <option value="bank">Bank</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-600">Paid at</label>
+                        <input type="date" className="w-full px-3 py-2 rounded border" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                        <button type="button" onClick={onClose} className="btn btn-outline">Cancel</button>
+                        <button disabled={!canSubmit} className="btn btn-primary disabled:opacity-50">Save</button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

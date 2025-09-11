@@ -37,6 +37,7 @@ export async function POST(request: Request) {
             }
         }
 
+        const session = await auth();
         const created = await Product.create({
             name,
             salePrice,
@@ -46,10 +47,10 @@ export async function POST(request: Request) {
             description,
             attributes: attributes || undefined,
             variants,
-            business: businessId
+            business: businessId,
+            createdBy: session?.user?.id || null,
         });
 
-        const session = await auth();
         if (session?.user?.id) {
             await logActivity({ businessId, userId: session.user.id, entity: "Product", entityId: String(created._id), action: "create", after: created });
         }

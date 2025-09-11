@@ -249,7 +249,13 @@ export default function StockPage() {
             {/* Stock Table */}
             <div className="rounded card p-0 overflow-hidden">
                 {loading && products.length === 0 ? (
-                    <div className="p-8 text-center text-muted">Loading stock data...</div>
+                    <div className="p-8">
+                        <div className="animate-pulse space-y-3">
+                            <div className="h-4 bg-black/10 rounded"></div>
+                            <div className="h-4 bg-black/10 rounded"></div>
+                            <div className="h-4 bg-black/10 rounded"></div>
+                        </div>
+                    </div>
                 ) : products.length === 0 ? (
                     <div className="p-8 text-center text-muted">
                         {showLowStock ? "No low stock items found." : "No products found."}

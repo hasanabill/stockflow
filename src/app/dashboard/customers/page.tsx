@@ -16,18 +16,28 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [q, setQ] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
-  async function load() {
+  async function load(reset = true) {
     setLoading(true);
-    const res = await fetch("/api/customers");
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    params.set("limit", "50");
+    params.set("offset", String(reset ? 0 : offset));
+    const res = await fetch(`/api/customers?${params.toString()}`);
     const data = await res.json();
-    setItems(data || []);
+    setItems(reset ? (data.customers || []) : [...items, ...(data.customers || [])]);
+    setHasMore(Boolean(data.pagination?.hasMore));
+    setOffset(data.pagination?.offset || 0);
     setLoading(false);
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   return (
     <div className="space-y-6">
@@ -39,6 +49,10 @@ export default function CustomersPage() {
       </div>
 
       <div className="overflow-hidden rounded card">
+        <div className="p-3 border-b flex items-center gap-2">
+          <input className="px-3 py-2 rounded border w-full" placeholder="Search name/email/phone" value={q} onChange={(e) => setQ(e.target.value)} />
+          <button className="btn btn-outline" onClick={() => load(true)}>Search</button>
+        </div>
         <table className="min-w-full text-sm">
           <thead className="bg-black/5">
             <tr>
@@ -51,7 +65,13 @@ export default function CustomersPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="p-3" colSpan={4}>Loading…</td>
+                <td className="p-3" colSpan={4}>
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-black/10 rounded"></div>
+                    <div className="h-4 bg-black/10 rounded"></div>
+                    <div className="h-4 bg-black/10 rounded"></div>
+                  </div>
+                </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
@@ -76,11 +96,19 @@ export default function CustomersPage() {
         </table>
       </div>
 
+      {hasMore && (
+        <div className="text-center">
+          <button className="btn btn-secondary" onClick={() => { setOffset(offset + 50); load(false); }} disabled={loading}>
+            {loading ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      )}
+
       {open && (
         <CustomerModal
           initial={editing || undefined}
           onClose={() => setOpen(false)}
-          onSaved={() => { setOpen(false); load(); }}
+          onSaved={() => { setOpen(false); load(true); }}
         />
       )}
     </div>

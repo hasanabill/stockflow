@@ -4,6 +4,7 @@ import Supplier from "@/lib/models/supplier";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 import { SupplierCreateSchema } from "@/lib/validation/schemas";
 import { validateRequestBody, handleValidationError } from "@/lib/validation/helpers";
+import { auth } from "@/auth";
 
 export async function GET() {
     await connectToDB();
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
         const validatedData = await validateRequestBody(SupplierCreateSchema, request);
         const { name, contactPerson, email, phone, address, notes } = validatedData;
 
+        const session = await auth();
         const created = await Supplier.create({
             name,
             contactPerson,
@@ -28,7 +30,8 @@ export async function POST(request: Request) {
             phone,
             address,
             notes,
-            business: businessId
+            business: businessId,
+            createdBy: session?.user?.id || null,
         });
 
         return NextResponse.json(created, { status: 201 });

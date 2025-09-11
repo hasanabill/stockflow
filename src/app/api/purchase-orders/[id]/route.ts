@@ -19,6 +19,18 @@ export async function PATCH(request: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "purchasing");
     const body = await request.json();
+    if (body && body.status === "ordered") {
+        // compute totals again if items changed, ensure valid transition
+        const po = await PurchaseOrder.findOne({ _id: params.id, business: businessId });
+        if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        po.status = "ordered";
+        // Recompute totals in case items were modified before ordering
+        po.subtotal = po.items.reduce((s, it) => s + (it.quantityOrdered * (it.unitCost || 0)), 0);
+        po.tax = po.tax || 0;
+        po.total = po.subtotal + po.tax;
+        await po.save();
+        return NextResponse.json(po);
+    }
     const updated = await PurchaseOrder.findOneAndUpdate({ _id: params.id, business: businessId }, body, { new: true });
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(updated);

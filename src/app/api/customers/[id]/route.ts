@@ -3,6 +3,7 @@ import connectToDB from "@/lib/mongodb";
 import Customer from "@/lib/models/customer";
 import { requireBusiness, requireBusinessAccess } from "@/lib/business";
 import { handleValidationError, validateRequest } from "@/lib/validation/helpers";
+import { auth } from "@/auth";
 import { z } from "zod";
 
 const CustomerUpdateSchema = z.object({
@@ -27,7 +28,8 @@ export async function PATCH(request: Request, { params }: any) {
     await connectToDB();
     const { businessId } = await requireBusinessAccess("write", "customers");
     const payload = validateRequest(CustomerUpdateSchema, await request.json());
-    const updated = await Customer.findOneAndUpdate({ _id: params.id, business: businessId }, payload, { new: true });
+    const session = await auth();
+    const updated = await Customer.findOneAndUpdate({ _id: params.id, business: businessId }, { ...payload, updatedBy: session?.user?.id || null }, { new: true });
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(updated);
   } catch (error) {
